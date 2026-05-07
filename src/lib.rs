@@ -1,9 +1,11 @@
 use config::{Config, JarMode};
-use maven::ResolvedArtifact;
+use maven::{Coordinate, ResolvedArtifact};
 use std::{
+    collections::HashSet,
     env,
     ffi::{OsStr, OsString},
     fs,
+    io::Write,
     path::{Path, PathBuf},
     process::Command,
     sync::mpsc,
@@ -13,7 +15,30 @@ use std::{
 
 pub mod config;
 mod jar;
+pub mod manifest;
 pub mod maven;
+
+const JUNIT_CONSOLE_GROUP: &str = "org.junit.platform";
+const JUNIT_CONSOLE_ARTIFACT: &str = "junit-platform-console-standalone";
+const JUNIT_CONSOLE_VERSION: &str = "1.14.0";
+const GOOGLE_FORMAT_GROUP: &str = "com.google.googlejavaformat";
+const GOOGLE_FORMAT_ARTIFACT: &str = "google-java-format";
+const GOOGLE_FORMAT_VERSION: &str = "1.35.0";
+const ECLIPSE_JDT_GROUP: &str = "org.eclipse.jdt";
+const ECLIPSE_JDT_ARTIFACT: &str = "org.eclipse.jdt.core";
+const ECLIPSE_JDT_VERSION: &str = "3.45.0";
+
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum FormatTool {
+    GoogleJavaFormat,
+    EclipseJdt,
+}
+
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct FormatOutcome {
+    pub file_count: usize,
+    pub tool: Option<FormatTool>,
+}
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum BuildStage {
@@ -87,6 +112,8 @@ public class Main {
         "[package]
 name = \"hello-world\"
 version = \"0.0.1\"
+root = \"./src\"
+main = \"com.example.Main\"
 
 [dependencies]",
     )
@@ -104,6 +131,66 @@ pub fn build_with_reporter(
     reporter: &mut dyn BuildReporter,
 ) -> Result<PathBuf, String> {
     build_project(config, reporter)
+}
+
+pub fn clean(root: &str) -> Result<bool, String> {
+    let target_dir = PathBuf::from(root).join("target");
+    if !target_dir.exists() {
+        return Ok(false);
+    }
+    if !target_dir.is_dir() {
+        return Err(format!(
+            "`{}` exists but is not a directory",
+            target_dir.display()
+        ));
+    }
+    fs::remove_dir_all(&target_dir).map_err(|err| {
+        format!(
+            "Failed to remove target directory `{}`: {err}",
+            target_dir.display()
+        )
+    })?;
+    Ok(true)
+}
+
+pub fn test_project(config: Config) -> Result<(), String> {
+    let artifacts = maven::resolve_dependencies(&config)?;
+    compile_sources(&config, &artifacts)?;
+
+    let junit_artifacts = resolve_tool_artifacts(
+        &config,
+        Coordinate::new(
+            JUNIT_CONSOLE_GROUP.to_string(),
+            JUNIT_CONSOLE_ARTIFACT.to_string(),
+            JUNIT_CONSOLE_VERSION.to_string(),
+        )?,
+    )?;
+    compile_test_sources(&config, &artifacts, &junit_artifacts)?;
+    run_junit_console(&config, &artifacts, &junit_artifacts)
+}
+
+pub fn format_project(config: Config) -> Result<FormatOutcome, String> {
+    let java_files = collect_format_java_files(&config)?;
+    if java_files.is_empty() {
+        return Ok(FormatOutcome {
+            file_count: 0,
+            tool: None,
+        });
+    }
+
+    let eclipse_config = PathBuf::from(&config.root).join("eclipse-formatter.xml");
+    let tool = if eclipse_config.exists() {
+        format_with_eclipse_jdt(&config, &java_files, &eclipse_config)?;
+        FormatTool::EclipseJdt
+    } else {
+        format_with_google_java_format(&config, &java_files)?;
+        FormatTool::GoogleJavaFormat
+    };
+
+    Ok(FormatOutcome {
+        file_count: java_files.len(),
+        tool: Some(tool),
+    })
 }
 
 pub fn run(config: Config) {
@@ -356,8 +443,18 @@ fn compile_sources(
 ) -> Result<CompileResult, String> {
     let src_dir = config.src_dir();
     let classes_dir = config.classes_dir();
+    let main_file = config.main_file();
+    if !main_file.exists() {
+        return Err(format!(
+            "Main source file `{}` does not exist. `[package].main` is `{}` and `[package].root` is `{}`",
+            main_file.display(),
+            config.main_class_name(),
+            src_dir.display()
+        ));
+    }
+
     let mut java_files = Vec::new();
-    collect_java_files(&src_dir, &mut java_files)?;
+    collect_java_files_excluding(&src_dir, &production_excludes(config), &mut java_files)?;
     java_files.sort();
 
     if java_files.is_empty() {
@@ -368,28 +465,90 @@ fn compile_sources(
     }
     let source_count = java_files.len();
 
+    let mut classpath_entries = vec![src_dir];
+    classpath_entries.extend(artifacts.iter().map(|artifact| artifact.jar_path.clone()));
+    let output = compile_java_files(&java_files, &classes_dir, &classpath_entries)?;
+
+    Ok(CompileResult {
+        source_count,
+        output,
+    })
+}
+
+fn compile_test_sources(
+    config: &Config,
+    artifacts: &[ResolvedArtifact],
+    tool_artifacts: &[ResolvedArtifact],
+) -> Result<CompileResult, String> {
+    let test_root = config.test_root_dir();
+    let test_classes_dir = config.test_classes_dir();
+    let mut java_files = Vec::new();
+    if test_root.exists() {
+        collect_java_files_excluding(&test_root, &[config.target_dir()], &mut java_files)?;
+    }
+    java_files.sort();
+
+    if test_classes_dir.exists() {
+        fs::remove_dir_all(&test_classes_dir).map_err(|err| {
+            format!(
+                "Failed to clean test class output directory `{}`: {err}",
+                test_classes_dir.display()
+            )
+        })?;
+    }
+    fs::create_dir_all(&test_classes_dir).map_err(|err| {
+        format!(
+            "Failed to create test class output directory `{}`: {err}",
+            test_classes_dir.display()
+        )
+    })?;
+
+    if java_files.is_empty() {
+        return Ok(CompileResult {
+            source_count: 0,
+            output: String::new(),
+        });
+    }
+
+    let mut classpath_entries = vec![config.classes_dir(), test_root, config.src_dir()];
+    classpath_entries.extend(artifacts.iter().map(|artifact| artifact.jar_path.clone()));
+    classpath_entries.extend(
+        tool_artifacts
+            .iter()
+            .map(|artifact| artifact.jar_path.clone()),
+    );
+    let output = compile_java_files(&java_files, &test_classes_dir, &classpath_entries)?;
+
+    Ok(CompileResult {
+        source_count: java_files.len(),
+        output,
+    })
+}
+
+fn compile_java_files(
+    java_files: &[PathBuf],
+    classes_dir: &Path,
+    classpath_entries: &[PathBuf],
+) -> Result<String, String> {
     if classes_dir.exists() {
-        fs::remove_dir_all(&classes_dir).map_err(|err| {
+        fs::remove_dir_all(classes_dir).map_err(|err| {
             format!(
                 "Failed to clean class output directory `{}`: {err}",
                 classes_dir.display()
             )
         })?;
     }
-    fs::create_dir_all(&classes_dir).map_err(|err| {
+    fs::create_dir_all(classes_dir).map_err(|err| {
         format!(
             "Failed to create class output directory `{}`: {err}",
             classes_dir.display()
         )
     })?;
 
-    let mut classpath_entries = vec![src_dir];
-    classpath_entries.extend(artifacts.iter().map(|artifact| artifact.jar_path.clone()));
-    let classpath = std::env::join_paths(classpath_entries.iter())
-        .map_err(|err| format!("Failed to construct javac classpath: {err}"))?;
+    let classpath = join_classpath(classpath_entries)?;
 
     let mut javac = Command::new("javac");
-    javac.arg("-cp").arg(classpath).arg("-d").arg(&classes_dir);
+    javac.arg("-cp").arg(classpath).arg("-d").arg(classes_dir);
     for java_file in java_files {
         javac.arg(java_file);
     }
@@ -403,11 +562,355 @@ fn compile_sources(
         return Err(message);
     }
 
-    Ok(CompileResult {
-        source_count,
-        output: command_output_text(&output),
-    })
+    Ok(command_output_text(&output))
 }
+
+fn run_junit_console(
+    config: &Config,
+    artifacts: &[ResolvedArtifact],
+    tool_artifacts: &[ResolvedArtifact],
+) -> Result<(), String> {
+    let mut classpath_entries = vec![config.classes_dir(), config.test_classes_dir()];
+    classpath_entries.extend(artifacts.iter().map(|artifact| artifact.jar_path.clone()));
+    classpath_entries.extend(
+        tool_artifacts
+            .iter()
+            .map(|artifact| artifact.jar_path.clone()),
+    );
+    let classpath = join_classpath(&classpath_entries)?;
+
+    let status = Command::new("java")
+        .arg("-cp")
+        .arg(classpath)
+        .arg("org.junit.platform.console.ConsoleLauncher")
+        .arg("--scan-class-path")
+        .status()
+        .map_err(|err| format!("Failed to start JUnit ConsoleLauncher: {err}"))?;
+
+    if !status.success() {
+        return Err(format!("JUnit ConsoleLauncher failed with status {status}"));
+    }
+
+    Ok(())
+}
+
+fn collect_format_java_files(config: &Config) -> Result<Vec<PathBuf>, String> {
+    let mut java_files = Vec::new();
+    let mut seen = HashSet::new();
+    let target_dir = config.target_dir();
+
+    for root in [config.src_dir(), config.test_root_dir()] {
+        if !root.exists() {
+            if root == config.src_dir() {
+                return Err(format!(
+                    "Source directory `{}` does not exist",
+                    root.display()
+                ));
+            }
+            continue;
+        }
+        collect_format_java_files_in(&root, &target_dir, &mut seen, &mut java_files)?;
+    }
+
+    java_files.sort();
+    Ok(java_files)
+}
+
+fn collect_format_java_files_in(
+    dir: &Path,
+    target_dir: &Path,
+    seen: &mut HashSet<PathBuf>,
+    java_files: &mut Vec<PathBuf>,
+) -> Result<(), String> {
+    if is_same_or_child(dir, target_dir) {
+        return Ok(());
+    }
+
+    for entry in
+        fs::read_dir(dir).map_err(|err| format!("Failed to read `{}`: {err}", dir.display()))?
+    {
+        let entry = entry.map_err(|err| format!("Failed to read source directory entry: {err}"))?;
+        let path = entry.path();
+        if path.is_dir() {
+            collect_format_java_files_in(&path, target_dir, seen, java_files)?;
+        } else if path
+            .extension()
+            .is_some_and(|extension| extension == "java")
+        {
+            let normalized = normalize_path(&path);
+            if seen.insert(normalized) {
+                java_files.push(path);
+            }
+        }
+    }
+
+    Ok(())
+}
+
+fn format_with_google_java_format(config: &Config, java_files: &[PathBuf]) -> Result<(), String> {
+    let artifacts = resolve_tool_artifacts(
+        config,
+        Coordinate::new(
+            GOOGLE_FORMAT_GROUP.to_string(),
+            GOOGLE_FORMAT_ARTIFACT.to_string(),
+            GOOGLE_FORMAT_VERSION.to_string(),
+        )?,
+    )?;
+    let classpath_entries = artifact_paths(&artifacts);
+    let classpath = join_classpath(&classpath_entries)?;
+
+    let mut java = Command::new("java");
+    for export in google_java_format_module_exports() {
+        java.arg(export);
+    }
+    java.arg("-cp")
+        .arg(classpath)
+        .arg("com.google.googlejavaformat.java.Main")
+        .arg("--replace");
+    for java_file in java_files {
+        java.arg(java_file);
+    }
+
+    let output = java
+        .output()
+        .map_err(|err| format!("Failed to start google-java-format: {err}"))?;
+    if !output.status.success() {
+        let mut message = format!("google-java-format failed with status {}", output.status);
+        append_command_output(&mut message, &output);
+        return Err(message);
+    }
+
+    Ok(())
+}
+
+fn format_with_eclipse_jdt(
+    config: &Config,
+    java_files: &[PathBuf],
+    eclipse_config: &Path,
+) -> Result<(), String> {
+    let artifacts = resolve_tool_artifacts(
+        config,
+        Coordinate::new(
+            ECLIPSE_JDT_GROUP.to_string(),
+            ECLIPSE_JDT_ARTIFACT.to_string(),
+            ECLIPSE_JDT_VERSION.to_string(),
+        )?,
+    )?;
+    let options = parse_eclipse_formatter_options(eclipse_config)?;
+    let tools_dir = config.tools_dir();
+    fs::create_dir_all(&tools_dir).map_err(|err| {
+        format!(
+            "Failed to create formatter tool directory `{}`: {err}",
+            tools_dir.display()
+        )
+    })?;
+
+    let options_path = tools_dir.join("eclipse-formatter-options.properties");
+    write_eclipse_options_properties(&options_path, &options)?;
+    let runner_classes = compile_eclipse_formatter_runner(&tools_dir, &artifacts)?;
+
+    let mut classpath_entries = vec![runner_classes];
+    classpath_entries.extend(artifact_paths(&artifacts));
+    let classpath = join_classpath(&classpath_entries)?;
+
+    let mut java = Command::new("java");
+    java.arg("-cp")
+        .arg(classpath)
+        .arg("dev.aurex.tools.EclipseFormatterRunner")
+        .arg(&options_path);
+    for java_file in java_files {
+        java.arg(java_file);
+    }
+
+    let output = java
+        .output()
+        .map_err(|err| format!("Failed to start Eclipse JDT formatter: {err}"))?;
+    if !output.status.success() {
+        let mut message = format!("Eclipse JDT formatter failed with status {}", output.status);
+        append_command_output(&mut message, &output);
+        return Err(message);
+    }
+
+    Ok(())
+}
+
+fn resolve_tool_artifacts(
+    config: &Config,
+    coordinate: Coordinate,
+) -> Result<Vec<ResolvedArtifact>, String> {
+    let repositories = maven::repositories_from_config(config.repositories())?;
+    let mut resolver = maven::MavenResolver::new(repositories, config.tools_dir())?;
+    resolver.resolve_roots(&[coordinate])
+}
+
+fn artifact_paths(artifacts: &[ResolvedArtifact]) -> Vec<PathBuf> {
+    artifacts
+        .iter()
+        .map(|artifact| artifact.jar_path.clone())
+        .collect()
+}
+
+fn google_java_format_module_exports() -> &'static [&'static str] {
+    &[
+        "--add-exports=jdk.compiler/com.sun.tools.javac.api=ALL-UNNAMED",
+        "--add-exports=jdk.compiler/com.sun.tools.javac.code=ALL-UNNAMED",
+        "--add-exports=jdk.compiler/com.sun.tools.javac.file=ALL-UNNAMED",
+        "--add-exports=jdk.compiler/com.sun.tools.javac.parser=ALL-UNNAMED",
+        "--add-exports=jdk.compiler/com.sun.tools.javac.tree=ALL-UNNAMED",
+        "--add-exports=jdk.compiler/com.sun.tools.javac.util=ALL-UNNAMED",
+    ]
+}
+
+fn parse_eclipse_formatter_options(path: &Path) -> Result<Vec<(String, String)>, String> {
+    let xml = fs::read_to_string(path)
+        .map_err(|err| format!("Failed to read `{}`: {err}", path.display()))?;
+    let document = roxmltree::Document::parse(&xml)
+        .map_err(|err| format!("Failed to parse `{}`: {err}", path.display()))?;
+    let mut options = Vec::new();
+    for node in document
+        .descendants()
+        .filter(|node| node.is_element() && node.tag_name().name() == "setting")
+    {
+        let Some(id) = node.attribute("id") else {
+            continue;
+        };
+        let Some(value) = node.attribute("value") else {
+            continue;
+        };
+        options.push((id.to_string(), value.to_string()));
+    }
+    options.sort_by(|left, right| left.0.cmp(&right.0));
+    Ok(options)
+}
+
+fn write_eclipse_options_properties(
+    path: &Path,
+    options: &[(String, String)],
+) -> Result<(), String> {
+    let mut file = fs::File::create(path)
+        .map_err(|err| format!("Failed to create `{}`: {err}", path.display()))?;
+    for (key, value) in options {
+        writeln!(
+            file,
+            "{}={}",
+            java_properties_escape(key),
+            java_properties_escape(value)
+        )
+        .map_err(|err| format!("Failed to write `{}`: {err}", path.display()))?;
+    }
+    Ok(())
+}
+
+fn java_properties_escape(value: &str) -> String {
+    value
+        .replace('\\', "\\\\")
+        .replace('\r', "\\r")
+        .replace('\n', "\\n")
+}
+
+fn compile_eclipse_formatter_runner(
+    tools_dir: &Path,
+    artifacts: &[ResolvedArtifact],
+) -> Result<PathBuf, String> {
+    let source_path = tools_dir.join("EclipseFormatterRunner.java");
+    let classes_dir = tools_dir.join("eclipse-formatter-runner");
+    fs::write(&source_path, ECLIPSE_FORMATTER_RUNNER).map_err(|err| {
+        format!(
+            "Failed to write Eclipse formatter runner `{}`: {err}",
+            source_path.display()
+        )
+    })?;
+    if classes_dir.exists() {
+        fs::remove_dir_all(&classes_dir).map_err(|err| {
+            format!(
+                "Failed to clean Eclipse formatter runner output `{}`: {err}",
+                classes_dir.display()
+            )
+        })?;
+    }
+    fs::create_dir_all(&classes_dir).map_err(|err| {
+        format!(
+            "Failed to create Eclipse formatter runner output `{}`: {err}",
+            classes_dir.display()
+        )
+    })?;
+
+    let classpath_entries = artifact_paths(artifacts);
+    let classpath = join_classpath(&classpath_entries)?;
+    let output = Command::new("javac")
+        .arg("-cp")
+        .arg(classpath)
+        .arg("-d")
+        .arg(&classes_dir)
+        .arg(&source_path)
+        .output()
+        .map_err(|err| format!("Failed to start javac for Eclipse formatter runner: {err}"))?;
+    if !output.status.success() {
+        let mut message = format!(
+            "javac failed to compile Eclipse formatter runner with status {}",
+            output.status
+        );
+        append_command_output(&mut message, &output);
+        return Err(message);
+    }
+
+    Ok(classes_dir)
+}
+
+const ECLIPSE_FORMATTER_RUNNER: &str = r#"package dev.aurex.tools;
+
+import java.nio.charset.StandardCharsets;
+import java.io.BufferedReader;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Properties;
+import org.eclipse.jdt.core.ToolFactory;
+import org.eclipse.jdt.core.formatter.CodeFormatter;
+import org.eclipse.jface.text.Document;
+import org.eclipse.text.edits.TextEdit;
+
+public final class EclipseFormatterRunner {
+    private EclipseFormatterRunner() {
+    }
+
+    public static void main(String[] args) throws Exception {
+        if (args.length < 2) {
+            throw new IllegalArgumentException("Expected options properties path and at least one Java file");
+        }
+
+        Properties properties = new Properties();
+        try (BufferedReader reader = Files.newBufferedReader(Path.of(args[0]), StandardCharsets.UTF_8)) {
+            properties.load(reader);
+        }
+        Map<String, String> options = new HashMap<>();
+        for (String name : properties.stringPropertyNames()) {
+            options.put(name, properties.getProperty(name));
+        }
+
+        CodeFormatter formatter = ToolFactory.createCodeFormatter(options);
+        for (int index = 1; index < args.length; index++) {
+            Path file = Path.of(args[index]);
+            String source = Files.readString(file, StandardCharsets.UTF_8);
+            TextEdit edit = formatter.format(
+                    CodeFormatter.K_COMPILATION_UNIT,
+                    source,
+                    0,
+                    source.length(),
+                    0,
+                    System.lineSeparator()
+            );
+            if (edit == null) {
+                throw new IllegalStateException("Eclipse JDT could not format " + file);
+            }
+            Document document = new Document(source);
+            edit.apply(document);
+            Files.writeString(file, document.get(), StandardCharsets.UTF_8);
+        }
+    }
+}
+"#;
 
 fn append_command_output(message: &mut String, output: &std::process::Output) {
     let output_text = command_output_text(output);
@@ -498,7 +1001,31 @@ fn copy_resource_tree(root: &Path, current: &Path, classes_dir: &Path) -> Result
     Ok(copied)
 }
 
-fn collect_java_files(dir: &Path, java_files: &mut Vec<PathBuf>) -> Result<(), String> {
+fn production_excludes(config: &Config) -> Vec<PathBuf> {
+    let mut excludes = Vec::new();
+    let src_dir = config.src_dir();
+    let test_root = config.test_root_dir();
+    if is_same_or_child(&test_root, &src_dir) {
+        excludes.push(test_root);
+    }
+    let target_dir = config.target_dir();
+    if is_same_or_child(&target_dir, &src_dir) {
+        excludes.push(target_dir);
+    }
+    excludes
+}
+
+fn collect_java_files_excluding(
+    dir: &Path,
+    excludes: &[PathBuf],
+    java_files: &mut Vec<PathBuf>,
+) -> Result<(), String> {
+    if excludes
+        .iter()
+        .any(|exclude| is_same_or_child(dir, exclude))
+    {
+        return Ok(());
+    }
     if !dir.exists() {
         return Err(format!(
             "Source directory `{}` does not exist",
@@ -512,7 +1039,7 @@ fn collect_java_files(dir: &Path, java_files: &mut Vec<PathBuf>) -> Result<(), S
         let entry = entry.map_err(|err| format!("Failed to read source directory entry: {err}"))?;
         let path = entry.path();
         if path.is_dir() {
-            collect_java_files(&path, java_files)?;
+            collect_java_files_excluding(&path, excludes, java_files)?;
         } else if path
             .extension()
             .is_some_and(|extension| extension == "java")
@@ -522,4 +1049,30 @@ fn collect_java_files(dir: &Path, java_files: &mut Vec<PathBuf>) -> Result<(), S
     }
 
     Ok(())
+}
+
+fn is_same_or_child(path: &Path, parent: &Path) -> bool {
+    let path = normalize_path(path);
+    let parent = normalize_path(parent);
+    path == parent || path.starts_with(parent)
+}
+
+fn normalize_path(path: &Path) -> PathBuf {
+    let mut normalized = PathBuf::new();
+    for component in path.components() {
+        match component {
+            std::path::Component::CurDir => {}
+            std::path::Component::ParentDir => {
+                if !normalized.pop() {
+                    normalized.push("..");
+                }
+            }
+            other => normalized.push(other.as_os_str()),
+        }
+    }
+    normalized
+}
+
+fn join_classpath(entries: &[PathBuf]) -> Result<OsString, String> {
+    env::join_paths(entries.iter()).map_err(|err| format!("Failed to construct classpath: {err}"))
 }

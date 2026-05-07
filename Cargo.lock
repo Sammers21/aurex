@@ -67,6 +67,7 @@ dependencies = [
  "roxmltree",
  "serde",
  "toml",
+ "toml_edit",
  "url",
  "zip",
 ]

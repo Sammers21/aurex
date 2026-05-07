@@ -2,7 +2,7 @@
   <id>dev.aurex.ide</id>
   <name>Aurex</name>
   <vendor>Aurex</vendor>
-  <description>Aurex init, build, run, and ax.toml navigation actions.</description>
+  <description>Aurex init, build, run, test, clean, format, and ax.toml navigation actions.</description>
 
   <depends>com.intellij.modules.platform</depends>
 
@@ -27,6 +27,18 @@
               class="dev.aurex.intellij.actions.RunAurexProjectAction"
               text="Run Aurex Project"
               description="Run ax run"/>
+      <action id="Aurex.Test"
+              class="dev.aurex.intellij.actions.TestAurexProjectAction"
+              text="Test Aurex Project"
+              description="Run ax test"/>
+      <action id="Aurex.Clean"
+              class="dev.aurex.intellij.actions.CleanAurexProjectAction"
+              text="Clean Aurex Project"
+              description="Run ax clean"/>
+      <action id="Aurex.Format"
+              class="dev.aurex.intellij.actions.FormatAurexProjectAction"
+              text="Format Aurex Project"
+              description="Run ax fmt"/>
       <separator/>
       <action id="Aurex.OpenToml"
               class="dev.aurex.intellij.actions.OpenAurexTomlAction"

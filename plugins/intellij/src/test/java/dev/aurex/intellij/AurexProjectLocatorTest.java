@@ -63,6 +63,9 @@ public final class AurexProjectLocatorTest {
 
     private static void validatesCommands() {
         assertEquals(AurexCommand.BUILD, AurexCommand.fromCliValue("build"), "build command");
+        assertEquals(AurexCommand.TEST, AurexCommand.fromCliValue("test"), "test command");
+        assertEquals(AurexCommand.CLEAN, AurexCommand.fromCliValue("clean"), "clean command");
+        assertEquals(AurexCommand.FMT, AurexCommand.fromCliValue("fmt"), "fmt command");
         assertThrows(() -> AurexCommand.fromCliValue("delete"), "invalid command");
     }
 
@@ -72,6 +75,9 @@ public final class AurexProjectLocatorTest {
         assertContains(pluginXml, "Aurex.Init", "init action");
         assertContains(pluginXml, "Aurex.Build", "build action");
         assertContains(pluginXml, "Aurex.Run", "run action");
+        assertContains(pluginXml, "Aurex.Test", "test action");
+        assertContains(pluginXml, "Aurex.Clean", "clean action");
+        assertContains(pluginXml, "Aurex.Format", "format action");
         assertContains(pluginXml, "Aurex.OpenToml", "open action");
         assertContains(pluginXml, "ToolsMenu", "tools menu registration");
         assertContains(pluginXml, "ProjectViewPopupMenu", "project view registration");

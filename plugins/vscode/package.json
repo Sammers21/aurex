@@ -16,6 +16,9 @@
     "onCommand:aurex.initProject",
     "onCommand:aurex.build",
     "onCommand:aurex.run",
+    "onCommand:aurex.test",
+    "onCommand:aurex.clean",
+    "onCommand:aurex.format",
     "onCommand:aurex.openManifest"
   ],
   "main": "./src/extension.js",
@@ -43,6 +46,24 @@
         "icon": "$(run)"
       },
       {
+        "command": "aurex.test",
+        "title": "Aurex: Test",
+        "category": "Aurex",
+        "icon": "$(beaker)"
+      },
+      {
+        "command": "aurex.clean",
+        "title": "Aurex: Clean",
+        "category": "Aurex",
+        "icon": "$(trash)"
+      },
+      {
+        "command": "aurex.format",
+        "title": "Aurex: Format",
+        "category": "Aurex",
+        "icon": "$(symbol-color)"
+      },
+      {
         "command": "aurex.openManifest",
         "title": "Aurex: Open ax.toml",
         "category": "Aurex",
@@ -60,6 +81,18 @@
         },
         {
           "command": "aurex.run",
+          "when": "workspaceFolderCount > 0"
+        },
+        {
+          "command": "aurex.test",
+          "when": "workspaceFolderCount > 0"
+        },
+        {
+          "command": "aurex.clean",
+          "when": "workspaceFolderCount > 0"
+        },
+        {
+          "command": "aurex.format",
           "when": "workspaceFolderCount > 0"
         },
         {
@@ -82,8 +115,20 @@
           "group": "aurex@3"
         },
         {
-          "command": "aurex.openManifest",
+          "command": "aurex.test",
           "group": "aurex@4"
+        },
+        {
+          "command": "aurex.clean",
+          "group": "aurex@5"
+        },
+        {
+          "command": "aurex.format",
+          "group": "aurex@6"
+        },
+        {
+          "command": "aurex.openManifest",
+          "group": "aurex@7"
         }
       ],
       "editor/title": [
@@ -96,6 +141,16 @@
           "command": "aurex.run",
           "when": "resourceFilename == ax.toml",
           "group": "navigation@2"
+        },
+        {
+          "command": "aurex.test",
+          "when": "resourceFilename == ax.toml",
+          "group": "navigation@3"
+        },
+        {
+          "command": "aurex.format",
+          "when": "resourceFilename == ax.toml",
+          "group": "navigation@4"
         }
       ]
     },
@@ -137,7 +192,10 @@
             "enum": [
               "init",
               "build",
-              "run"
+              "run",
+              "test",
+              "clean",
+              "fmt"
             ]
           },
           "cwd": {

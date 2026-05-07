@@ -57,6 +57,9 @@ test("createTaskDefinition normalizes commands and cwd", () => {
     executable: "C:/bin/ax.exe",
   });
   assert.throws(() => normalizeCommand("delete"), /Unsupported Aurex command/);
+  assert.equal(normalizeCommand("test"), "test");
+  assert.equal(normalizeCommand("clean"), "clean");
+  assert.equal(normalizeCommand("fmt"), "fmt");
 });
 
 test("toDirectory returns parent for files and itself for directories", () => {
@@ -78,6 +81,9 @@ test("package manifest contributes Aurex commands and task type", () => {
     "aurex.initProject",
     "aurex.build",
     "aurex.run",
+    "aurex.test",
+    "aurex.clean",
+    "aurex.format",
     "aurex.openManifest",
   ]);
   assert.equal(manifest.contributes.taskDefinitions[0].type, "aurex");

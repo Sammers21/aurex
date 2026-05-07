@@ -129,18 +129,21 @@ fn ax_help_explains_commands_and_examples() {
         stdout.contains("Aurex (ax) builds small Java applications"),
         "missing overview: {stdout}"
     );
-    assert!(
-        stdout.contains("init   Create a new Aurex project"),
-        "missing init description: {stdout}"
-    );
-    assert!(
-        stdout.contains("build  Compile sources and package the project jar"),
-        "missing build description: {stdout}"
-    );
-    assert!(
-        stdout.contains("run    Build the project and run the jar"),
-        "missing run description: {stdout}"
-    );
+    for expected in [
+        "Create a new Aurex project",
+        "Add or update Maven dependencies",
+        "Remove Maven dependencies",
+        "Compile sources and package the project jar",
+        "Build the project and run the jar",
+        "Compile and run JUnit 5 tests",
+        "Remove the target directory",
+        "Format Java sources",
+    ] {
+        assert!(
+            stdout.contains(expected),
+            "missing help text `{expected}`: {stdout}"
+        );
+    }
     assert!(
         stdout.contains("Examples:"),
         "missing examples section: {stdout}"
@@ -176,7 +179,8 @@ fn write_basic_project(project: &Path, message: &str) {
 name = "cli-output"
 version = "0.1.0"
 jar_name = "cli-output.jar"
-main = "com/example/Main.java"
+root = "./src"
+main = "com.example.Main"
 
 [dependencies]
 "#,
@@ -205,7 +209,8 @@ fn write_args_project(project: &Path) {
 name = "cli-args"
 version = "0.1.0"
 jar_name = "cli-args.jar"
-main = "com/example/Main.java"
+root = "./src"
+main = "com.example.Main"
 
 [dependencies]
 "#,
@@ -232,7 +237,8 @@ fn write_deprecated_project(project: &Path) {
 name = "cli-warning"
 version = "0.1.0"
 jar_name = "cli-warning.jar"
-main = "com/example/Main.java"
+root = "./src"
+main = "com.example.Main"
 
 [dependencies]
 "#,

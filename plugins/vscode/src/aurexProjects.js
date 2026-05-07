@@ -2,7 +2,7 @@ const fs = require("fs");
 const path = require("path");
 
 const AX_TOML = "ax.toml";
-const VALID_COMMANDS = new Set(["init", "build", "run"]);
+const VALID_COMMANDS = new Set(["init", "build", "run", "test", "clean", "fmt"]);
 const IGNORED_DIRS = new Set([".git", ".idea", "build", "node_modules", "out", "target"]);
 
 function normalizeCommand(command) {

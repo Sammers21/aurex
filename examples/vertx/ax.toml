@@ -2,7 +2,8 @@
 name = "vertx-example"
 version = "0.1.0"
 jar_name = "vertx-example.jar"
-main = "com/example/vertx/Main.java"
+root = "./src"
+main = "com.example.vertx.Main"
 
 [dependencies]
 "io.vertx:vertx-core" = "4.4.5"

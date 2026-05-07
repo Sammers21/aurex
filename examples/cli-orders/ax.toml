@@ -2,7 +2,8 @@
 name = "cli-orders"
 version = "0.1.0"
 jar_name = "cli-orders.jar"
-main = "com/example/orders/Main.java"
+root = "./src"
+main = "com.example.orders.Main"
 
 [build]
 jar_mode = "fat"

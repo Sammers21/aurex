@@ -19,6 +19,9 @@ function activate(context) {
     vscode.commands.registerCommand("aurex.initProject", (uri) => initProject(uri)),
     vscode.commands.registerCommand("aurex.build", (uri) => runProjectCommand("build", uri)),
     vscode.commands.registerCommand("aurex.run", (uri) => runProjectCommand("run", uri)),
+    vscode.commands.registerCommand("aurex.test", (uri) => runProjectCommand("test", uri)),
+    vscode.commands.registerCommand("aurex.clean", (uri) => runProjectCommand("clean", uri)),
+    vscode.commands.registerCommand("aurex.format", (uri) => runProjectCommand("fmt", uri)),
     vscode.commands.registerCommand("aurex.openManifest", (uri) => openManifest(uri))
   );
 }
@@ -151,6 +154,9 @@ class AurexTaskProvider {
     return discoverAurexProjects(workspaceFolderPaths()).flatMap((root) => [
       this.createTask("build", root),
       this.createTask("run", root),
+      this.createTask("test", root),
+      this.createTask("clean", root),
+      this.createTask("fmt", root),
     ]);
   }
 

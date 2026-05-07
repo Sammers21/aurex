@@ -18,6 +18,7 @@ reqwest = { version = "=0.11.27", default-features = false, features = ["blockin
 roxmltree = "0.20.0"
 serde = { version = "1.0.202", features = ["derive"] }
 toml = "0.8.13"
+toml_edit = "0.22.13"
 # Pin reqwest's transitive URL stack below crates that require Edition 2024.
 url = "=2.5.0"
 zip = { version = "0.6.6", default-features = false, features = ["deflate"] }

@@ -2,7 +2,8 @@
 name = "json-report"
 version = "0.1.0"
 jar_name = "json-report.jar"
-main = "com/example/report/Main.java"
+root = "./src"
+main = "com.example.report.Main"
 
 [build]
 jar_mode = "fat"

@@ -2,7 +2,8 @@
 name = "text-utils"
 version = "0.1.0"
 jar_name = "text-utils.jar"
-main = "com/example/text/Main.java"
+root = "./src"
+main = "com.example.text.Main"
 
 [dependencies]
 "org.apache.commons:commons-text" = "1.11.0"

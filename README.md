@@ -25,6 +25,32 @@ Build without running:
 ax build
 ```
 
+Add or remove Maven dependencies:
+
+```bash
+ax add org.apache.commons:commons-lang3@3.14.0
+ax remove org.apache.commons:commons-lang3
+```
+
+Run JUnit 5 tests:
+
+```bash
+ax test
+ax t
+```
+
+Format Java sources:
+
+```bash
+ax fmt
+```
+
+Remove generated output:
+
+```bash
+ax clean
+```
+
 Print the Java runtime that `ax` resolves from the current shell:
 
 ```bash
@@ -41,7 +67,9 @@ with `java -jar`.
 name = "my-app"
 version = "0.1.0"
 jar_name = "my-app.jar"
-main = "com/example/Main.java"
+root = "./src"
+test_root = "./src/test/java"
+main = "com.example.Main"
 
 [[repositories]]
 name = "internal"
@@ -60,8 +88,10 @@ dirs = ["settings"]
 ```
 
 `[package]` is required. `name` is required; `version` defaults to `0.0.1`;
-`jar_name` defaults to `<name>-<version>.jar`; `main` defaults to
-`com/example/Main.java`.
+`jar_name` defaults to `<name>-<version>.jar`; `root` defaults to `./src`;
+`test_root` defaults to `./src/test/java`; `main` defaults to
+`com.example.Main`. `main` is a fully qualified Java class name, not a source
+file path.
 
 `[dependencies]` maps `"groupId:artifactId"` to a release version. Aurex
 downloads root and transitive jars into `target/deps`; `SNAPSHOT` versions are
@@ -78,6 +108,15 @@ jar contents.
 
 `[resources].dirs` lists directories to copy into the compiled classes before
 packaging. Files are packaged relative to each configured directory.
+
+`ax test` compiles production sources, compiles tests into
+`target/test-classes`, and runs JUnit 5 with
+`junit-platform-console-standalone`.
+
+`ax fmt` formats `.java` files under `root` and `test_root`. If
+`eclipse-formatter.xml` is present in the project root, Aurex uses Eclipse JDT;
+otherwise it uses google-java-format. Managed test and formatter jars are kept
+under `target/tools`.
 
 ## Examples
 
@@ -101,7 +140,7 @@ IDE helper projects live under `plugins/`:
 
 - `plugins/vscode`: VS Code commands, task provider, settings, and `ax.toml`
   snippets.
-- `plugins/intellij`: IntelliJ actions for init, build, run, and opening
+- `plugins/intellij`: IntelliJ actions for init, build, run, test, clean, fmt, and opening
   `ax.toml`.
 
 Plugin-local tests:

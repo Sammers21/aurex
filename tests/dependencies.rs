@@ -17,7 +17,8 @@ fn commons_lang_dependency_runs_from_maven_central() {
 name = "commons-lang"
 version = "0.1.0"
 jar_name = "commons-lang.jar"
-main = "com/example/Main.java"
+root = "./src"
+main = "com.example.Main"
 
 [dependencies]
 "org.apache.commons:commons-lang3" = "3.14.0"
@@ -63,7 +64,8 @@ fn configured_resource_directory_is_packaged_in_fat_jar() {
 name = "resource-dir"
 version = "0.1.0"
 jar_name = "resource-dir.jar"
-main = "com/example/Main.java"
+root = "./src"
+main = "com.example.Main"
 
 [build]
 jar_mode = "fat"
@@ -244,7 +246,8 @@ fn write_local_dependency_project(project: &Path, repository_url: &str, jar_mode
 name = "local-app"
 version = "0.1.0"
 jar_name = "local-app.jar"
-main = "com/example/Main.java"
+root = "./src"
+main = "com.example.Main"
 {build_section}
 [[repositories]]
 name = "local"
@@ -287,7 +290,8 @@ fn write_transitive_dependency_project(
 name = "local-app"
 version = "0.1.0"
 jar_name = "local-app.jar"
-main = "com/example/Main.java"
+root = "./src"
+main = "com.example.Main"
 {build_section}
 [[repositories]]
 name = "local"

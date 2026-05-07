@@ -2,6 +2,7 @@
 name = "basic"
 version = "0.0.1"
 jar_name = "basic.jar"
-main = "com/sammers/TestMain.java"
+root = "./src"
+main = "com.sammers.TestMain"
 
 [dependencies]
