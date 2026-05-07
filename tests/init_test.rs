@@ -1,6 +1,6 @@
-use std::{fs::create_dir, path};
-use geralt::init;
 use geralt::build;
+use geralt::init;
+use std::{fs::create_dir, path};
 
 #[test]
 fn hello_world_test() {
@@ -29,4 +29,3 @@ fn hello_world_test() {
     let output_str = String::from_utf8_lossy(&output.stdout).replace("\r\n", "\n");
     assert_eq!(output_str, "Hello, world!\n");
 }
-

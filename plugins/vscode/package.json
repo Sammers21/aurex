@@ -1,0 +1,155 @@
+{
+  "name": "geralt-vscode",
+  "displayName": "Geralt",
+  "description": "VS Code helpers for Geralt Java build system projects.",
+  "version": "0.1.0",
+  "publisher": "geralt",
+  "license": "Apache-2.0",
+  "engines": {
+    "vscode": "^1.90.0"
+  },
+  "categories": [
+    "Other"
+  ],
+  "activationEvents": [
+    "workspaceContains:geralt.toml",
+    "onCommand:geralt.initProject",
+    "onCommand:geralt.build",
+    "onCommand:geralt.run",
+    "onCommand:geralt.openManifest"
+  ],
+  "main": "./src/extension.js",
+  "scripts": {
+    "test": "node --check src/extension.js && node --check src/geraltProjects.js && node --test test/geraltProjects.test.js"
+  },
+  "contributes": {
+    "commands": [
+      {
+        "command": "geralt.initProject",
+        "title": "Geralt: Init Project",
+        "category": "Geralt",
+        "icon": "$(new-folder)"
+      },
+      {
+        "command": "geralt.build",
+        "title": "Geralt: Build",
+        "category": "Geralt",
+        "icon": "$(tools)"
+      },
+      {
+        "command": "geralt.run",
+        "title": "Geralt: Run",
+        "category": "Geralt",
+        "icon": "$(run)"
+      },
+      {
+        "command": "geralt.openManifest",
+        "title": "Geralt: Open geralt.toml",
+        "category": "Geralt",
+        "icon": "$(go-to-file)"
+      }
+    ],
+    "menus": {
+      "commandPalette": [
+        {
+          "command": "geralt.initProject"
+        },
+        {
+          "command": "geralt.build",
+          "when": "workspaceFolderCount > 0"
+        },
+        {
+          "command": "geralt.run",
+          "when": "workspaceFolderCount > 0"
+        },
+        {
+          "command": "geralt.openManifest",
+          "when": "workspaceFolderCount > 0"
+        }
+      ],
+      "explorer/context": [
+        {
+          "command": "geralt.initProject",
+          "when": "explorerResourceIsFolder",
+          "group": "geralt@1"
+        },
+        {
+          "command": "geralt.build",
+          "group": "geralt@2"
+        },
+        {
+          "command": "geralt.run",
+          "group": "geralt@3"
+        },
+        {
+          "command": "geralt.openManifest",
+          "group": "geralt@4"
+        }
+      ],
+      "editor/title": [
+        {
+          "command": "geralt.build",
+          "when": "resourceFilename == geralt.toml",
+          "group": "navigation@1"
+        },
+        {
+          "command": "geralt.run",
+          "when": "resourceFilename == geralt.toml",
+          "group": "navigation@2"
+        }
+      ]
+    },
+    "configuration": {
+      "title": "Geralt",
+      "properties": {
+        "geralt.executablePath": {
+          "type": "string",
+          "default": "geralt",
+          "description": "Path or command name for the Geralt executable."
+        },
+        "geralt.revealTerminal": {
+          "type": "boolean",
+          "default": true,
+          "description": "Reveal the task terminal when running Geralt commands."
+        }
+      }
+    },
+    "configurationDefaults": {
+      "files.associations": {
+        "geralt.toml": "toml"
+      }
+    },
+    "snippets": [
+      {
+        "language": "toml",
+        "path": "./snippets/geralt-toml.code-snippets"
+      }
+    ],
+    "taskDefinitions": [
+      {
+        "type": "geralt",
+        "required": [
+          "command"
+        ],
+        "properties": {
+          "command": {
+            "type": "string",
+            "enum": [
+              "init",
+              "build",
+              "run"
+            ]
+          },
+          "cwd": {
+            "type": "string",
+            "description": "Geralt project root for this task."
+          },
+          "executable": {
+            "type": "string",
+            "description": "Geralt executable path or command name."
+          }
+        }
+      }
+    ]
+  }
+}

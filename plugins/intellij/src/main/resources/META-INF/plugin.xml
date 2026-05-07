@@ -1,0 +1,37 @@
+<idea-plugin>
+  <id>dev.geralt.ide</id>
+  <name>Geralt</name>
+  <vendor>Geralt</vendor>
+  <description>Geralt init, build, run, and geralt.toml navigation actions.</description>
+
+  <depends>com.intellij.modules.platform</depends>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <notificationGroup id="Geralt" displayType="BALLOON"/>
+  </extensions>
+
+  <actions>
+    <group id="Geralt.Actions" text="Geralt" popup="true">
+      <add-to-group group-id="ToolsMenu" anchor="last"/>
+      <add-to-group group-id="ProjectViewPopupMenu" anchor="last"/>
+
+      <action id="Geralt.Init"
+              class="dev.geralt.intellij.actions.InitGeraltProjectAction"
+              text="Init Geralt Project"
+              description="Run geralt init"/>
+      <action id="Geralt.Build"
+              class="dev.geralt.intellij.actions.BuildGeraltProjectAction"
+              text="Build Geralt Project"
+              description="Run geralt build"/>
+      <action id="Geralt.Run"
+              class="dev.geralt.intellij.actions.RunGeraltProjectAction"
+              text="Run Geralt Project"
+              description="Run geralt run"/>
+      <separator/>
+      <action id="Geralt.OpenToml"
+              class="dev.geralt.intellij.actions.OpenGeraltTomlAction"
+              text="Open geralt.toml"
+              description="Open the Geralt project config"/>
+    </group>
+  </actions>
+</idea-plugin>

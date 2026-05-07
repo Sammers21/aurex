@@ -1,5 +1,14 @@
 /target
+**/target/
 /temp
+.idea/
+*.iml
+node_modules/
+plugins/**/build/
+plugins/**/node_modules/
+plugins/vscode/*.vsix
+plugins/intellij/.gradle/
+plugins/intellij/.intellijPlatform/
 # ignore jar files
 *.jar
 *.class

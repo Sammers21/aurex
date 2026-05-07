@@ -7,5 +7,11 @@ edition = "2021"
 
 [dependencies]
 clap = { version = "4.5.4", features = ["derive", "cargo"] }
+# Keep this compatible with the Cargo 1.75 toolchain used by the repo.
+reqwest = { version = "=0.11.27", default-features = false, features = ["blocking", "rustls-tls"] }
+roxmltree = "0.20.0"
 serde = { version = "1.0.202", features = ["derive"] }
 toml = "0.8.13"
+# Pin reqwest's transitive URL stack below crates that require Edition 2024.
+url = "=2.5.0"
+zip = { version = "0.6.6", default-features = false, features = ["deflate"] }

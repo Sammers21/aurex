@@ -1,0 +1,11 @@
+[package]
+name = "json-report"
+version = "0.1.0"
+jar_name = "json-report.jar"
+main = "com/example/report/Main.java"
+
+[build]
+jar_mode = "fat"
+
+[dependencies]
+"com.google.code.gson:gson" = "2.10.1"
