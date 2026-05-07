@@ -69,7 +69,7 @@ $ geralt java
 ```
 
 Geralt uses the `java`, `javac`, and `jar` commands available on your shell
-`PATH`.
+`PATH`; `JAVA_HOME` is not used for tool selection.
 
 In order to add dependencies to your project, you can add them to the `geralt.toml` file under the `[dependencies]` section. For example, to add the `org.apache.commons:commons-lang3:3.12.0` dependency, you can add the following line:
 

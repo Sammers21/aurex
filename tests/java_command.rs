@@ -22,4 +22,8 @@ fn java_command_reports_runtime_version() {
         stdout.to_ascii_lowercase().contains("version"),
         "expected java version in output, got: {stdout}"
     );
+    assert!(
+        !stdout.contains("JAVA_HOME"),
+        "geralt java should report the PATH-resolved runtime only, got: {stdout}"
+    );
 }

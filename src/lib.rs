@@ -67,9 +67,6 @@ pub fn run(config: Config) {
 pub fn java() -> Result<(), String> {
     let info = java_info()?;
     println!("java: {}", info.executable.display());
-    if let Some(java_home) = env::var_os("JAVA_HOME") {
-        println!("JAVA_HOME: {}", PathBuf::from(java_home).display());
-    }
     print!("{}", info.version_output);
     Ok(())
 }
