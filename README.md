@@ -1,160 +1,112 @@
-# ax
+# Aurex (ax)
 
-`ax` is a fast, minimal Cargo-style build system for Java apps. It compiles
-Java sources with `javac`, resolves Maven dependencies, and packages runnable
-classpath or fat jars from a small `ax.toml` file.
+Aurex (`ax`) is a small build tool for Java applications. It reads `ax.toml`,
+compiles Java sources with `javac`, resolves Maven dependencies, copies
+configured resources, and writes a runnable jar.
 
-Aurex is the Rust package behind the `ax` command. IDE helpers for VS Code and
-IntelliJ live under `plugins/`.
+## Quick Start
 
-## Hello World
-
-You can initialize a new `ax` project by running:
+Create a project in the current directory:
 
 ```bash
-$ ax init
+ax init
 ```
 
-This will create a new `ax` project in the current directory. The structure of the project will look like this:
+This creates `src/com/example/Main.java` and `ax.toml`. Build and run the
+generated project:
 
-```
-src/
-  com/
-    example/
-      Main.java
-ax.toml
+```bash
+ax run
 ```
 
-The `Main.java` file will contain the following code:
+Build without running:
 
-```java
-package com.example;
-
-public class Main {
-    public static void main(String[] args) {
-        System.out.println("Hello, world!");
-    }
-}
+```bash
+ax build
 ```
 
-and the `ax.toml` file will contain the following configuration:
+Print the Java runtime that `ax` resolves from the current shell:
+
+```bash
+ax java
+```
+
+`ax build` uses `javac` from `PATH`; `ax run` builds first, then runs the jar
+with `java -jar`.
+
+## ax.toml
 
 ```toml
 [package]
-name = "hello-world"
-version = "0.0.1"
+name = "my-app"
+version = "0.1.0"
+jar_name = "my-app.jar"
+main = "com/example/Main.java"
 
-[dependencies]
-```
-
-You can build the project by running:
-
-```bash
-$ ax run
-```
-
-This will compile the project and run the `Main` class.
-
-You can also build the project without running it by running:
-
-```bash
-$ ax build
-```
-
-This will compile the project, resolve dependencies into `target/deps`, and create the configured runnable jar.
-
-To check which Java runtime `ax` will use from your current shell, run:
-
-```bash
-$ ax java
-```
-
-`ax` uses the `java`, `javac`, and `jar` commands available on your shell
-`PATH`; `JAVA_HOME` is not used for tool selection.
-
-In order to add dependencies to your project, you can add them to the `ax.toml` file under the `[dependencies]` section. For example, to add the `org.apache.commons:commons-lang3:3.12.0` dependency, you can add the following line:
-
-```toml
-[dependencies]
-"org.apache.commons:commons-lang3" = "3.12.0"
-```
-
-You can then run `ax build` to download the dependency and build the project.
-
-Dependencies are resolved from configured Maven repositories first, then Maven
-Central. You can add repositories with optional basic auth:
-
-```toml
 [[repositories]]
 name = "internal"
 url = "https://repo.example.com/maven2"
 username = "user"
 password = "pass"
-```
 
-By default `ax` creates a classpath jar whose manifest points at dependency
-jars in `target/deps`. To build one merged jar instead, set:
-
-```toml
 [build]
 jar_mode = "fat"
-```
 
-To package non-Java resources into the jar, add resource roots. Files are copied
-relative to each configured directory:
-
-```toml
 [resources]
 dirs = ["settings"]
+
+[dependencies]
+"org.apache.commons:commons-lang3" = "3.14.0"
 ```
+
+`[package]` is required. `name` is required; `version` defaults to `0.0.1`;
+`jar_name` defaults to `<name>-<version>.jar`; `main` defaults to
+`com/example/Main.java`.
+
+`[dependencies]` maps `"groupId:artifactId"` to a release version. Aurex
+downloads root and transitive jars into `target/deps`; `SNAPSHOT` versions are
+rejected.
+
+`[[repositories]]` entries are tried before Maven Central. `username` and
+`password` are optional, but must be configured together when basic auth is
+needed.
+
+`[build].jar_mode` can be `classpath` or `fat`. Classpath mode is the default
+and writes a manifest `Class-Path` pointing at jars in `target/deps`. Fat mode
+creates one merged jar containing project classes, resources, and dependency
+jar contents.
+
+`[resources].dirs` lists directories to copy into the compiled classes before
+packaging. Files are packaged relative to each configured directory.
 
 ## Examples
 
-The `examples/` folder contains runnable `ax` subprojects that exercise
-different project shapes:
+The `examples/` directory contains runnable `ax` projects:
 
 - `basic`: no-dependency hello world project.
-- `vertx`: async framework example with transitive Maven dependencies.
-- `text-utils`: text processing with Apache Commons Text.
-- `json-report`: multi-class JSON serialization built as a fat jar.
+- `vertx`: Vert.x app with transitive Maven dependencies.
+- `text-utils`: Apache Commons Text example.
+- `json-report`: Gson example built as a fat jar.
 - `cli-orders`: Picocli command-style app built as a fat jar.
 
-Run them through the integration tests with:
+Run the example integration tests with:
 
 ```bash
 cargo test --test examples
 ```
 
-## IDE Plugins
+## IDE Helpers
 
-`ax` IDE helpers live under `plugins/`:
+IDE helper projects live under `plugins/`:
 
-- `plugins/vscode`: VS Code extension with init/build/run/open commands,
-  task provider support, settings, and `ax.toml` snippets.
-- `plugins/intellij`: IntelliJ Platform plugin project with Tools menu and
-  project-view actions for init/build/run/open.
+- `plugins/vscode`: VS Code commands, task provider, settings, and `ax.toml`
+  snippets.
+- `plugins/intellij`: IntelliJ actions for init, build, run, and opening
+  `ax.toml`.
 
-Plugin-local tests can be run with:
+Plugin-local tests:
 
 ```bash
 cd plugins/vscode && npm test
 cd plugins/intellij && ./scripts/test.ps1
-```
-
-## Installation
-
-You can install Aurex and use the ax CLI by running:
-
-MacOS with [Homebrew](https://brew.sh/):
-
-```bash
-brew install aurex
-ax init
-```
-
-Linux via [sdkman](https://sdkman.io/):
-
-```bash
-sdk install aurex
-ax init
 ```
