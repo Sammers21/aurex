@@ -2,7 +2,7 @@
   <id>dev.aurex.ide</id>
   <name>Aurex</name>
   <vendor>Aurex</vendor>
-  <description>Aurex init, build, run, and aurex.toml navigation actions.</description>
+  <description>Aurex init, build, run, and ax.toml navigation actions.</description>
 
   <depends>com.intellij.modules.platform</depends>
 
@@ -30,7 +30,7 @@
       <separator/>
       <action id="Aurex.OpenToml"
               class="dev.aurex.intellij.actions.OpenAurexTomlAction"
-              text="Open aurex.toml"
+              text="Open ax.toml"
               description="Open the Aurex project config"/>
     </group>
   </actions>

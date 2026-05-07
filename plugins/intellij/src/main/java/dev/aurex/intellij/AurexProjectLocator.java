@@ -13,7 +13,7 @@ import java.util.Set;
 import java.util.stream.Stream;
 
 public final class AurexProjectLocator {
-    public static final String AUREX_TOML = "aurex.toml";
+    public static final String AX_TOML = "ax.toml";
 
     private static final Set<String> IGNORED_DIRECTORIES = Set.of(
             ".git",
@@ -28,7 +28,7 @@ public final class AurexProjectLocator {
     }
 
     public static boolean isAurexProject(Path directory) {
-        return directory != null && Files.isRegularFile(directory.resolve(AUREX_TOML));
+        return directory != null && Files.isRegularFile(directory.resolve(AX_TOML));
     }
 
     public static Optional<Path> nearestRoot(Path start, Collection<Path> workspaceBoundaries) {

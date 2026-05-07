@@ -24,11 +24,11 @@ public final class InitAurexProjectAction extends AurexActionSupport {
             return;
         }
 
-        if (Files.exists(root.resolve(AurexProjectLocator.AUREX_TOML))) {
+        if (Files.exists(root.resolve(AurexProjectLocator.AX_TOML))) {
             AurexRunner.notify(
                     project,
                     "Aurex project already exists",
-                    "aurex.toml already exists in " + root,
+                    "ax.toml already exists in " + root,
                     NotificationType.WARNING
             );
             return;

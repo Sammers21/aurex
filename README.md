@@ -2,7 +2,7 @@
 
 Aurex is a Cargo-like build system for Java projects. It compiles Java sources
 with `javac`, resolves Maven dependencies, and packages runnable classpath or
-fat jars from a small `aurex.toml` file.
+fat jars from a small `ax.toml` file.
 
 IDE helpers for VS Code and IntelliJ live under `plugins/`.
 
@@ -21,7 +21,7 @@ src/
   com/
     example/
       Main.java
-aurex.toml
+ax.toml
 ```
 
 The `Main.java` file will contain the following code:
@@ -36,7 +36,7 @@ public class Main {
 }
 ```
 
-and the `aurex.toml` file will contain the following configuration:
+and the `ax.toml` file will contain the following configuration:
 
 ```toml
 [package]
@@ -71,7 +71,7 @@ $ ax java
 Aurex uses the `java`, `javac`, and `jar` commands available on your shell
 `PATH`; `JAVA_HOME` is not used for tool selection.
 
-In order to add dependencies to your project, you can add them to the `aurex.toml` file under the `[dependencies]` section. For example, to add the `org.apache.commons:commons-lang3:3.12.0` dependency, you can add the following line:
+In order to add dependencies to your project, you can add them to the `ax.toml` file under the `[dependencies]` section. For example, to add the `org.apache.commons:commons-lang3:3.12.0` dependency, you can add the following line:
 
 ```toml
 [dependencies]
@@ -129,7 +129,7 @@ cargo test --test examples
 Aurex IDE helpers live under `plugins/`:
 
 - `plugins/vscode`: VS Code extension with init/build/run/open commands,
-  task provider support, settings, and `aurex.toml` snippets.
+  task provider support, settings, and `ax.toml` snippets.
 - `plugins/intellij`: IntelliJ Platform plugin project with Tools menu and
   project-view actions for init/build/run/open.
 

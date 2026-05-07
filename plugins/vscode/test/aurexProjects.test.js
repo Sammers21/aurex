@@ -16,7 +16,7 @@ test("findNearestAurexProject resolves from nested source files", () => {
   const project = path.join(root, "service");
   const source = path.join(project, "src", "com", "example", "Main.java");
   fs.mkdirSync(path.dirname(source), { recursive: true });
-  fs.writeFileSync(path.join(project, "aurex.toml"), "[package]\nname = \"service\"\n");
+  fs.writeFileSync(path.join(project, "ax.toml"), "[package]\nname = \"service\"\n");
   fs.writeFileSync(source, "class Main {}\n");
 
   assert.equal(findNearestAurexProject(source, [root]), project);
@@ -24,7 +24,7 @@ test("findNearestAurexProject resolves from nested source files", () => {
 
 test("findNearestAurexProject stops at workspace boundary", () => {
   const root = tempDir();
-  const outside = path.join(root, "aurex.toml");
+  const outside = path.join(root, "ax.toml");
   const workspace = path.join(root, "workspace");
   const nested = path.join(workspace, "src", "Main.java");
   fs.mkdirSync(path.dirname(nested), { recursive: true });
@@ -41,7 +41,7 @@ test("discoverAurexProjects finds nested projects and skips generated folders", 
   const generated = path.join(root, "target", "ignored");
   for (const directory of [api, cli, generated]) {
     fs.mkdirSync(directory, { recursive: true });
-    fs.writeFileSync(path.join(directory, "aurex.toml"), "[package]\nname = \"demo\"\n");
+    fs.writeFileSync(path.join(directory, "ax.toml"), "[package]\nname = \"demo\"\n");
   }
 
   assert.deepEqual(discoverAurexProjects([root]), [api, cli].sort());
@@ -61,7 +61,7 @@ test("createTaskDefinition normalizes commands and cwd", () => {
 
 test("toDirectory returns parent for files and itself for directories", () => {
   const root = tempDir();
-  const file = path.join(root, "aurex.toml");
+  const file = path.join(root, "ax.toml");
   fs.writeFileSync(file, "");
 
   assert.equal(toDirectory(file), root);

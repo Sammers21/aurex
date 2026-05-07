@@ -7,7 +7,7 @@ This extension adds command-palette, editor-title, Explorer context-menu, and ta
 - `Aurex: Init Project`
 - `Aurex: Build`
 - `Aurex: Run`
-- `Aurex: Open aurex.toml`
+- `Aurex: Open ax.toml`
 
 Set `aurex.executablePath` if the `ax` executable is not on `PATH`.
 

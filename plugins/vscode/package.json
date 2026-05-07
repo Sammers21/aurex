@@ -12,7 +12,7 @@
     "Other"
   ],
   "activationEvents": [
-    "workspaceContains:aurex.toml",
+    "workspaceContains:ax.toml",
     "onCommand:aurex.initProject",
     "onCommand:aurex.build",
     "onCommand:aurex.run",
@@ -44,7 +44,7 @@
       },
       {
         "command": "aurex.openManifest",
-        "title": "Aurex: Open aurex.toml",
+        "title": "Aurex: Open ax.toml",
         "category": "Aurex",
         "icon": "$(go-to-file)"
       }
@@ -89,12 +89,12 @@
       "editor/title": [
         {
           "command": "aurex.build",
-          "when": "resourceFilename == aurex.toml",
+          "when": "resourceFilename == ax.toml",
           "group": "navigation@1"
         },
         {
           "command": "aurex.run",
-          "when": "resourceFilename == aurex.toml",
+          "when": "resourceFilename == ax.toml",
           "group": "navigation@2"
         }
       ]
@@ -116,13 +116,13 @@
     },
     "configurationDefaults": {
       "files.associations": {
-        "aurex.toml": "toml"
+        "ax.toml": "toml"
       }
     },
     "snippets": [
       {
         "language": "toml",
-        "path": "./snippets/aurex-toml.code-snippets"
+        "path": "./snippets/ax-toml.code-snippets"
       }
     ],
     "taskDefinitions": [

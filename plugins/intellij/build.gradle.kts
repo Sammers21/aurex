@@ -31,7 +31,7 @@ intellijPlatform {
         id = "dev.aurex.ide"
         name = "Aurex"
         version = project.version.toString()
-        description = "Adds Aurex init, build, run, and aurex.toml navigation actions."
+        description = "Adds Aurex init, build, run, and ax.toml navigation actions."
         ideaVersion {
             sinceBuild = "233"
         }

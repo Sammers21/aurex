@@ -1,7 +1,7 @@
 const fs = require("fs");
 const path = require("path");
 
-const AUREX_TOML = "aurex.toml";
+const AX_TOML = "ax.toml";
 const VALID_COMMANDS = new Set(["init", "build", "run"]);
 const IGNORED_DIRS = new Set([".git", ".idea", "build", "node_modules", "out", "target"]);
 
@@ -13,7 +13,7 @@ function normalizeCommand(command) {
 }
 
 function isAurexProject(directory, fsImpl = fs) {
-  return fileExists(path.join(directory, AUREX_TOML), fsImpl);
+  return fileExists(path.join(directory, AX_TOML), fsImpl);
 }
 
 function findNearestAurexProject(startPath, workspaceFolders = [], fsImpl = fs) {
@@ -95,7 +95,7 @@ function fileExists(file, fsImpl) {
 }
 
 module.exports = {
-  AUREX_TOML,
+  AX_TOML,
   createTaskDefinition,
   discoverAurexProjects,
   findNearestAurexProject,

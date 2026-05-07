@@ -17,7 +17,7 @@ fn hello_world_test() {
     init("./temp");
     // Check if the 'temp' directory contains the expected files
     assert!(path::Path::new("temp/src/com/example/Main.java").exists());
-    assert!(path::Path::new("temp/aurex.toml").exists());
+    assert!(path::Path::new("temp/ax.toml").exists());
     build(aurex::config::read_toml("./temp"));
     assert!(path::Path::new("temp/hello-world-0.0.1.jar").exists());
     // run java -jar fat.jar  and check the output is "Hello, world!"

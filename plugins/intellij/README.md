@@ -5,7 +5,7 @@ This plugin adds Tools menu actions for Aurex Java projects:
 - Init Aurex Project
 - Build Aurex Project
 - Run Aurex Project
-- Open aurex.toml
+- Open ax.toml
 
 The runner uses `AUREX_EXECUTABLE` when set, otherwise it runs `ax` from `PATH`.
 

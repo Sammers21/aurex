@@ -12,7 +12,7 @@ fn commons_lang_dependency_runs_from_maven_central() {
     let project = fresh_test_dir("commons-lang");
     write_project_file(
         &project,
-        "aurex.toml",
+        "ax.toml",
         r#"[package]
 name = "commons-lang"
 version = "0.1.0"
@@ -58,7 +58,7 @@ fn configured_resource_directory_is_packaged_in_fat_jar() {
     let project = fresh_test_dir("resource-dir");
     write_project_file(
         &project,
-        "aurex.toml",
+        "ax.toml",
         r#"[package]
 name = "resource-dir"
 version = "0.1.0"
@@ -238,7 +238,7 @@ fn write_local_dependency_project(project: &Path, repository_url: &str, jar_mode
         .unwrap_or_default();
     write_project_file(
         project,
-        "aurex.toml",
+        "ax.toml",
         &format!(
             r#"[package]
 name = "local-app"
@@ -281,7 +281,7 @@ fn write_transitive_dependency_project(
         .unwrap_or_default();
     write_project_file(
         project,
-        "aurex.toml",
+        "ax.toml",
         &format!(
             r#"[package]
 name = "local-app"

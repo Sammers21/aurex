@@ -29,7 +29,7 @@ public class Main {
         panic!("Failed to create the Main.java file: {}", jf.unwrap_err());
     }
     let gt = std::fs::write(
-        format!("{}/aurex.toml", root),
+        format!("{}/ax.toml", root),
         "[package]
 name = \"hello-world\"
 version = \"0.0.1\"
@@ -37,7 +37,7 @@ version = \"0.0.1\"
 [dependencies]",
     );
     if gt.is_err() {
-        panic!("Failed to create the aurex.toml file: {}", gt.unwrap_err());
+        panic!("Failed to create the ax.toml file: {}", gt.unwrap_err());
     }
 }
 

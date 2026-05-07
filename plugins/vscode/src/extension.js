@@ -2,7 +2,7 @@ const fs = require("fs");
 const path = require("path");
 const vscode = require("vscode");
 const {
-  AUREX_TOML,
+  AX_TOML,
   createTaskDefinition,
   discoverAurexProjects,
   findNearestAurexProject,
@@ -32,7 +32,7 @@ async function initProject(uri) {
   }
 
   if (isAurexProject(root)) {
-    vscode.window.showWarningMessage(`${AUREX_TOML} already exists in ${root}`);
+    vscode.window.showWarningMessage(`${AX_TOML} already exists in ${root}`);
     return;
   }
 
@@ -52,7 +52,7 @@ async function openManifest(uri) {
     return;
   }
 
-  const document = await vscode.workspace.openTextDocument(path.join(root, AUREX_TOML));
+  const document = await vscode.workspace.openTextDocument(path.join(root, AX_TOML));
   await vscode.window.showTextDocument(document);
 }
 
@@ -72,7 +72,7 @@ async function resolveAurexRoot(uri) {
     return pickProject(discovered);
   }
 
-  vscode.window.showWarningMessage(`No ${AUREX_TOML} found in this workspace.`);
+  vscode.window.showWarningMessage(`No ${AX_TOML} found in this workspace.`);
   return undefined;
 }
 
@@ -157,7 +157,7 @@ class AurexTaskProvider {
   resolveTask(task) {
     const command = task.definition.command;
     const cwd = task.definition.cwd;
-    if (!command || !cwd || !fs.existsSync(path.join(cwd, AUREX_TOML))) {
+    if (!command || !cwd || !fs.existsSync(path.join(cwd, AX_TOML))) {
       return undefined;
     }
     return this.createTask(command, cwd);

@@ -40,7 +40,7 @@ abstract class AurexActionSupport extends DumbAwareAction {
 
     protected void openManifest(Project project, Path root) {
         VirtualFile file = LocalFileSystem.getInstance()
-                .refreshAndFindFileByNioFile(root.resolve(AurexProjectLocator.AUREX_TOML));
+                .refreshAndFindFileByNioFile(root.resolve(AurexProjectLocator.AX_TOML));
         if (file != null) {
             FileEditorManager.getInstance(project).openFile(file, true);
         }
@@ -50,7 +50,7 @@ abstract class AurexActionSupport extends DumbAwareAction {
         AurexRunner.notify(
                 project,
                 "No Aurex project found",
-                "Could not find aurex.toml from the selected file or project root.",
+                "Could not find ax.toml from the selected file or project root.",
                 NotificationType.WARNING
         );
     }

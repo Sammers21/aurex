@@ -20,7 +20,7 @@ public final class AurexProjectLocatorTest {
         Path project = root.resolve("service");
         Path source = project.resolve("src/com/example/Main.java");
         Files.createDirectories(source.getParent());
-        Files.writeString(project.resolve(AurexProjectLocator.AUREX_TOML), "[package]\nname = \"service\"\n");
+        Files.writeString(project.resolve(AurexProjectLocator.AX_TOML), "[package]\nname = \"service\"\n");
         Files.writeString(source, "class Main {}\n");
 
         assertEquals(
@@ -35,7 +35,7 @@ public final class AurexProjectLocatorTest {
         Path workspace = root.resolve("workspace");
         Path source = workspace.resolve("src/Main.java");
         Files.createDirectories(source.getParent());
-        Files.writeString(root.resolve(AurexProjectLocator.AUREX_TOML), "[package]\nname = \"outside\"\n");
+        Files.writeString(root.resolve(AurexProjectLocator.AX_TOML), "[package]\nname = \"outside\"\n");
         Files.writeString(source, "class Main {}\n");
 
         assertTrue(
@@ -51,7 +51,7 @@ public final class AurexProjectLocatorTest {
         Path generated = root.resolve("target/ignored");
         for (Path project : List.of(api, cli, generated)) {
             Files.createDirectories(project);
-            Files.writeString(project.resolve(AurexProjectLocator.AUREX_TOML), "[package]\nname = \"demo\"\n");
+            Files.writeString(project.resolve(AurexProjectLocator.AX_TOML), "[package]\nname = \"demo\"\n");
         }
 
         assertEquals(
