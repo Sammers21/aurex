@@ -1,20 +1,21 @@
-# Aurex
+# ax
 
-Aurex is a Cargo-like build system for Java projects. It compiles Java sources
-with `javac`, resolves Maven dependencies, and packages runnable classpath or
-fat jars from a small `ax.toml` file.
+`ax` is a fast, minimal Cargo-style build system for Java apps. It compiles
+Java sources with `javac`, resolves Maven dependencies, and packages runnable
+classpath or fat jars from a small `ax.toml` file.
 
-IDE helpers for VS Code and IntelliJ live under `plugins/`.
+Aurex is the Rust package behind the `ax` command. IDE helpers for VS Code and
+IntelliJ live under `plugins/`.
 
 ## Hello World
 
-You can initialize a new Aurex project by running:
+You can initialize a new `ax` project by running:
 
 ```bash
 $ ax init
 ```
 
-This will create a new Aurex project in the current directory. The structure of the project will look like this:
+This will create a new `ax` project in the current directory. The structure of the project will look like this:
 
 ```
 src/
@@ -62,13 +63,13 @@ $ ax build
 
 This will compile the project, resolve dependencies into `target/deps`, and create the configured runnable jar.
 
-To check which Java runtime Aurex will use from your current shell, run:
+To check which Java runtime `ax` will use from your current shell, run:
 
 ```bash
 $ ax java
 ```
 
-Aurex uses the `java`, `javac`, and `jar` commands available on your shell
+`ax` uses the `java`, `javac`, and `jar` commands available on your shell
 `PATH`; `JAVA_HOME` is not used for tool selection.
 
 In order to add dependencies to your project, you can add them to the `ax.toml` file under the `[dependencies]` section. For example, to add the `org.apache.commons:commons-lang3:3.12.0` dependency, you can add the following line:
@@ -91,7 +92,7 @@ username = "user"
 password = "pass"
 ```
 
-By default Aurex creates a classpath jar whose manifest points at dependency
+By default `ax` creates a classpath jar whose manifest points at dependency
 jars in `target/deps`. To build one merged jar instead, set:
 
 ```toml
@@ -109,7 +110,7 @@ dirs = ["settings"]
 
 ## Examples
 
-The `examples/` folder contains runnable Aurex subprojects that exercise
+The `examples/` folder contains runnable `ax` subprojects that exercise
 different project shapes:
 
 - `basic`: no-dependency hello world project.
@@ -126,7 +127,7 @@ cargo test --test examples
 
 ## IDE Plugins
 
-Aurex IDE helpers live under `plugins/`:
+`ax` IDE helpers live under `plugins/`:
 
 - `plugins/vscode`: VS Code extension with init/build/run/open commands,
   task provider support, settings, and `ax.toml` snippets.
@@ -142,7 +143,7 @@ cd plugins/intellij && ./scripts/test.ps1
 
 ## Installation
 
-You can install Aurex by running:
+You can install Aurex and use the ax CLI by running:
 
 MacOS with [Homebrew](https://brew.sh/):
 
