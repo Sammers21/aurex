@@ -12,6 +12,7 @@ path = "src/main.rs"
 
 [dependencies]
 clap = { version = "4.5.4", features = ["derive", "cargo"] }
+crossterm = "0.27.0"
 # Keep this compatible with the Cargo 1.75 toolchain used by the repo.
 reqwest = { version = "=0.11.27", default-features = false, features = ["blocking", "rustls-tls"] }
 roxmltree = "0.20.0"

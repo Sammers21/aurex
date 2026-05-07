@@ -1,6 +1,7 @@
 /target
 **/target/
 /temp
+animations-demos/
 .idea/
 *.iml
 node_modules/

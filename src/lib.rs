@@ -2,20 +2,76 @@ use config::{Config, JarMode};
 use maven::ResolvedArtifact;
 use std::{
     env,
-    ffi::OsString,
+    ffi::{OsStr, OsString},
     fs,
     path::{Path, PathBuf},
     process::Command,
+    sync::mpsc,
+    thread,
+    time::Duration,
 };
 
 pub mod config;
 mod jar;
 pub mod maven;
 
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum BuildStage {
+    Resolve,
+    Compile,
+    Resources,
+    Package,
+}
+
+impl BuildStage {
+    pub fn as_str(self) -> &'static str {
+        match self {
+            Self::Resolve => "resolve",
+            Self::Compile => "compile",
+            Self::Resources => "resources",
+            Self::Package => "package",
+        }
+    }
+}
+
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub enum BuildEventDetail {
+    None,
+    Artifacts(usize),
+    Sources(usize),
+    Resources(usize),
+    Artifact(PathBuf),
+}
+
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub enum BuildEvent {
+    Started(BuildStage),
+    Finished(BuildStage, BuildEventDetail),
+    Output { stage: BuildStage, text: String },
+    Done { jar_path: PathBuf },
+}
+
+pub trait BuildReporter {
+    fn report(&mut self, event: BuildEvent);
+
+    fn tick(&mut self) {}
+}
+
+pub struct NoopBuildReporter;
+
+impl BuildReporter for NoopBuildReporter {
+    fn report(&mut self, _event: BuildEvent) {}
+}
+
 pub fn init(root: &str) {
+    try_init(root).unwrap_or_else(|err| panic!("{err}"))
+}
+
+pub fn try_init(root: &str) -> Result<(), String> {
     // Create the dir for main class
-    std::fs::create_dir_all(format!("{}/src/com/example", root)).unwrap();
-    let jf = std::fs::write(
+    fs::create_dir_all(format!("{}/src/com/example", root))
+        .map_err(|err| format!("Failed to create source directory: {err}"))?;
+    fs::write(
         format!("{}/src/com/example/Main.java", root),
         "package com.example;
 
@@ -24,44 +80,79 @@ public class Main {
         System.out.println(\"Hello, world!\");
     }
 }",
-    );
-    if jf.is_err() {
-        panic!("Failed to create the Main.java file: {}", jf.unwrap_err());
-    }
-    let gt = std::fs::write(
+    )
+    .map_err(|err| format!("Failed to create the Main.java file: {err}"))?;
+    fs::write(
         format!("{}/ax.toml", root),
         "[package]
 name = \"hello-world\"
 version = \"0.0.1\"
 
 [dependencies]",
-    );
-    if gt.is_err() {
-        panic!("Failed to create the ax.toml file: {}", gt.unwrap_err());
-    }
+    )
+    .map_err(|err| format!("Failed to create the ax.toml file: {err}"))?;
+    Ok(())
 }
 
 pub fn build(config: Config) -> PathBuf {
-    build_project(config).unwrap_or_else(|err| panic!("{err}"))
+    let mut reporter = NoopBuildReporter;
+    build_with_reporter(config, &mut reporter).unwrap_or_else(|err| panic!("{err}"))
+}
+
+pub fn build_with_reporter(
+    config: Config,
+    reporter: &mut dyn BuildReporter,
+) -> Result<PathBuf, String> {
+    build_project(config, reporter)
 }
 
 pub fn run(config: Config) {
-    let jar_path = build(config);
-    let status = Command::new("java").arg("-jar").arg(&jar_path).status();
+    run_with_args(config, std::iter::empty::<OsString>())
+}
+
+pub fn run_with_args<I, S>(config: Config, app_args: I)
+where
+    I: IntoIterator<Item = S>,
+    S: AsRef<OsStr>,
+{
+    let mut reporter = NoopBuildReporter;
+    run_with_reporter_args(config, app_args, &mut reporter).unwrap_or_else(|err| panic!("{err}"))
+}
+
+pub fn run_with_reporter(config: Config, reporter: &mut dyn BuildReporter) -> Result<(), String> {
+    run_with_reporter_args(config, std::iter::empty::<OsString>(), reporter)
+}
+
+pub fn run_with_reporter_args<I, S>(
+    config: Config,
+    app_args: I,
+    reporter: &mut dyn BuildReporter,
+) -> Result<(), String>
+where
+    I: IntoIterator<Item = S>,
+    S: AsRef<OsStr>,
+{
+    let jar_path = build_with_reporter(config, reporter)?;
+    let status = Command::new("java")
+        .arg("-jar")
+        .arg(&jar_path)
+        .args(app_args)
+        .status();
     if status.is_err() {
-        panic!(
+        return Err(format!(
             "Failed to execute `{}`: {}",
             jar_path.display(),
             status.unwrap_err()
-        );
+        ));
     }
     let status = status.unwrap();
     if !status.success() {
-        panic!(
+        return Err(format!(
             "java -jar `{}` failed with status {status}",
             jar_path.display()
-        );
+        ));
     }
+    Ok(())
 }
 
 pub fn java() -> Result<(), String> {
@@ -71,12 +162,13 @@ pub fn java() -> Result<(), String> {
     Ok(())
 }
 
-struct JavaInfo {
-    executable: PathBuf,
-    version_output: String,
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct JavaInfo {
+    pub executable: PathBuf,
+    pub version_output: String,
 }
 
-fn java_info() -> Result<JavaInfo, String> {
+pub fn java_info() -> Result<JavaInfo, String> {
     let output = Command::new("java")
         .arg("-version")
         .output()
@@ -164,31 +256,104 @@ fn executable_extensions() -> Vec<OsString> {
     Vec::new()
 }
 
-fn build_project(config: Config) -> Result<PathBuf, String> {
-    let artifacts = maven::resolve_dependencies(&config)?;
-    compile_sources(&config, &artifacts)?;
-    copy_resources(&config)?;
+fn build_project(config: Config, reporter: &mut dyn BuildReporter) -> Result<PathBuf, String> {
+    reporter.report(BuildEvent::Started(BuildStage::Resolve));
+    let resolve_config = config.clone();
+    let artifacts = run_with_heartbeat(reporter, move || {
+        maven::resolve_dependencies(&resolve_config)
+    })?;
+    reporter.report(BuildEvent::Finished(
+        BuildStage::Resolve,
+        BuildEventDetail::Artifacts(artifacts.len()),
+    ));
 
-    let jar_path = config.jar_file();
-    match config.jar_mode() {
-        JarMode::Classpath => jar::create_classpath_jar(
-            &jar_path,
-            &config.classes_dir(),
-            &config.main_class_name(),
-            &artifacts,
-        )?,
-        JarMode::Fat => jar::create_fat_jar(
-            &jar_path,
-            &config.classes_dir(),
-            &config.main_class_name(),
-            &artifacts,
-        )?,
+    reporter.report(BuildEvent::Started(BuildStage::Compile));
+    let compile_config = config.clone();
+    let compile_artifacts = artifacts.clone();
+    let compile_result = run_with_heartbeat(reporter, move || {
+        compile_sources(&compile_config, &compile_artifacts)
+    })?;
+    if !compile_result.output.trim().is_empty() {
+        reporter.report(BuildEvent::Output {
+            stage: BuildStage::Compile,
+            text: compile_result.output,
+        });
     }
+    reporter.report(BuildEvent::Finished(
+        BuildStage::Compile,
+        BuildEventDetail::Sources(compile_result.source_count),
+    ));
+
+    reporter.report(BuildEvent::Started(BuildStage::Resources));
+    let resource_config = config.clone();
+    let resource_count = run_with_heartbeat(reporter, move || copy_resources(&resource_config))?;
+    reporter.report(BuildEvent::Finished(
+        BuildStage::Resources,
+        BuildEventDetail::Resources(resource_count),
+    ));
+
+    reporter.report(BuildEvent::Started(BuildStage::Package));
+    let package_config = config.clone();
+    let package_artifacts = artifacts.clone();
+    let jar_path = run_with_heartbeat(reporter, move || {
+        let jar_path = package_config.jar_file();
+        match package_config.jar_mode() {
+            JarMode::Classpath => jar::create_classpath_jar(
+                &jar_path,
+                &package_config.classes_dir(),
+                &package_config.main_class_name(),
+                &package_artifacts,
+            )?,
+            JarMode::Fat => jar::create_fat_jar(
+                &jar_path,
+                &package_config.classes_dir(),
+                &package_config.main_class_name(),
+                &package_artifacts,
+            )?,
+        }
+        Ok(jar_path)
+    })?;
+    reporter.report(BuildEvent::Finished(
+        BuildStage::Package,
+        BuildEventDetail::Artifact(jar_path.clone()),
+    ));
+    reporter.report(BuildEvent::Done {
+        jar_path: jar_path.clone(),
+    });
 
     Ok(jar_path)
 }
 
-fn compile_sources(config: &Config, artifacts: &[ResolvedArtifact]) -> Result<(), String> {
+fn run_with_heartbeat<T, F>(reporter: &mut dyn BuildReporter, operation: F) -> Result<T, String>
+where
+    T: Send + 'static,
+    F: FnOnce() -> Result<T, String> + Send + 'static,
+{
+    let (sender, receiver) = mpsc::channel();
+    thread::spawn(move || {
+        let _ = sender.send(operation());
+    });
+
+    loop {
+        match receiver.recv_timeout(Duration::from_millis(80)) {
+            Ok(result) => return result,
+            Err(mpsc::RecvTimeoutError::Timeout) => reporter.tick(),
+            Err(mpsc::RecvTimeoutError::Disconnected) => {
+                return Err("build task stopped before reporting a result".to_string());
+            }
+        }
+    }
+}
+
+struct CompileResult {
+    source_count: usize,
+    output: String,
+}
+
+fn compile_sources(
+    config: &Config,
+    artifacts: &[ResolvedArtifact],
+) -> Result<CompileResult, String> {
     let src_dir = config.src_dir();
     let classes_dir = config.classes_dir();
     let mut java_files = Vec::new();
@@ -201,6 +366,7 @@ fn compile_sources(config: &Config, artifacts: &[ResolvedArtifact]) -> Result<()
             src_dir.display()
         ));
     }
+    let source_count = java_files.len();
 
     if classes_dir.exists() {
         fs::remove_dir_all(&classes_dir).map_err(|err| {
@@ -228,17 +394,48 @@ fn compile_sources(config: &Config, artifacts: &[ResolvedArtifact]) -> Result<()
         javac.arg(java_file);
     }
 
-    let status = javac
-        .status()
+    let output = javac
+        .output()
         .map_err(|err| format!("Failed to start javac: {err}"))?;
-    if !status.success() {
-        return Err(format!("javac failed with status {status}"));
+    if !output.status.success() {
+        let mut message = format!("javac failed with status {}", output.status);
+        append_command_output(&mut message, &output);
+        return Err(message);
     }
 
-    Ok(())
+    Ok(CompileResult {
+        source_count,
+        output: command_output_text(&output),
+    })
 }
 
-fn copy_resources(config: &Config) -> Result<(), String> {
+fn append_command_output(message: &mut String, output: &std::process::Output) {
+    let output_text = command_output_text(output);
+    if !output_text.trim().is_empty() {
+        message.push_str(":\n");
+        message.push_str(output_text.trim_end());
+    }
+}
+
+fn command_output_text(output: &std::process::Output) -> String {
+    let mut text = String::new();
+    append_output_stream(&mut text, &output.stdout);
+    append_output_stream(&mut text, &output.stderr);
+    text
+}
+
+fn append_output_stream(text: &mut String, stream: &[u8]) {
+    if stream.is_empty() {
+        return;
+    }
+    if !text.is_empty() && !text.ends_with('\n') {
+        text.push('\n');
+    }
+    text.push_str(&String::from_utf8_lossy(stream));
+}
+
+fn copy_resources(config: &Config) -> Result<usize, String> {
+    let mut copied = 0;
     for resource_dir in config.resource_dirs() {
         if !resource_dir.exists() {
             return Err(format!(
@@ -246,12 +443,13 @@ fn copy_resources(config: &Config) -> Result<(), String> {
                 resource_dir.display()
             ));
         }
-        copy_resource_tree(&resource_dir, &resource_dir, &config.classes_dir())?;
+        copied += copy_resource_tree(&resource_dir, &resource_dir, &config.classes_dir())?;
     }
-    Ok(())
+    Ok(copied)
 }
 
-fn copy_resource_tree(root: &Path, current: &Path, classes_dir: &Path) -> Result<(), String> {
+fn copy_resource_tree(root: &Path, current: &Path, classes_dir: &Path) -> Result<usize, String> {
+    let mut copied = 0;
     for entry in fs::read_dir(current).map_err(|err| {
         format!(
             "Failed to read resource directory `{}`: {err}",
@@ -262,7 +460,7 @@ fn copy_resource_tree(root: &Path, current: &Path, classes_dir: &Path) -> Result
             entry.map_err(|err| format!("Failed to read resource directory entry: {err}"))?;
         let path = entry.path();
         if path.is_dir() {
-            copy_resource_tree(root, &path, classes_dir)?;
+            copied += copy_resource_tree(root, &path, classes_dir)?;
             continue;
         }
         if path
@@ -295,8 +493,9 @@ fn copy_resource_tree(root: &Path, current: &Path, classes_dir: &Path) -> Result
                 output.display()
             )
         })?;
+        copied += 1;
     }
-    Ok(())
+    Ok(copied)
 }
 
 fn collect_java_files(dir: &Path, java_files: &mut Vec<PathBuf>) -> Result<(), String> {

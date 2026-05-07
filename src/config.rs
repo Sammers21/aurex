@@ -1,4 +1,4 @@
-use std::{collections::HashMap, path::PathBuf};
+use std::{collections::HashMap, fs, path::PathBuf};
 
 use serde::Deserialize;
 
@@ -57,15 +57,19 @@ pub struct Repository {
 }
 
 pub fn read_toml(root: &str) -> Config {
-    let toml = std::fs::read_to_string(format!("{}/ax.toml", root));
-    if toml.is_err() {
-        panic!("Failed to read the ax.toml file: {}", toml.unwrap_err());
-    }
-    let config: ConfigToml = toml::from_str(&toml.unwrap()).unwrap();
-    return Config {
+    try_read_toml(root).unwrap_or_else(|err| panic!("{err}"))
+}
+
+pub fn try_read_toml(root: &str) -> Result<Config, String> {
+    let path = PathBuf::from(root).join("ax.toml");
+    let toml = fs::read_to_string(&path)
+        .map_err(|err| format!("Failed to read `{}`: {err}", path.display()))?;
+    let config: ConfigToml = toml::from_str(&toml)
+        .map_err(|err| format!("Failed to parse `{}`: {err}", path.display()))?;
+    Ok(Config {
         root: root.to_string(),
         config_toml: config,
-    };
+    })
 }
 
 impl Config {
