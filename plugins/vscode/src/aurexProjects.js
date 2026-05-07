@@ -1,22 +1,22 @@
 const fs = require("fs");
 const path = require("path");
 
-const GERALT_TOML = "geralt.toml";
+const AUREX_TOML = "aurex.toml";
 const VALID_COMMANDS = new Set(["init", "build", "run"]);
 const IGNORED_DIRS = new Set([".git", ".idea", "build", "node_modules", "out", "target"]);
 
 function normalizeCommand(command) {
   if (!VALID_COMMANDS.has(command)) {
-    throw new Error(`Unsupported Geralt command: ${command}`);
+    throw new Error(`Unsupported Aurex command: ${command}`);
   }
   return command;
 }
 
-function isGeraltProject(directory, fsImpl = fs) {
-  return fileExists(path.join(directory, GERALT_TOML), fsImpl);
+function isAurexProject(directory, fsImpl = fs) {
+  return fileExists(path.join(directory, AUREX_TOML), fsImpl);
 }
 
-function findNearestGeraltProject(startPath, workspaceFolders = [], fsImpl = fs) {
+function findNearestAurexProject(startPath, workspaceFolders = [], fsImpl = fs) {
   const start = toDirectory(startPath, fsImpl);
   if (!start) {
     return undefined;
@@ -24,7 +24,7 @@ function findNearestGeraltProject(startPath, workspaceFolders = [], fsImpl = fs)
 
   const boundaries = workspaceFolders.map((folder) => path.resolve(folder));
   for (let current = path.resolve(start); ; current = path.dirname(current)) {
-    if (isGeraltProject(current, fsImpl)) {
+    if (isAurexProject(current, fsImpl)) {
       return current;
     }
 
@@ -34,7 +34,7 @@ function findNearestGeraltProject(startPath, workspaceFolders = [], fsImpl = fs)
   }
 }
 
-function discoverGeraltProjects(workspaceFolders, fsImpl = fs) {
+function discoverAurexProjects(workspaceFolders, fsImpl = fs) {
   const projects = [];
   for (const folder of workspaceFolders) {
     walk(path.resolve(folder), fsImpl, projects);
@@ -42,9 +42,9 @@ function discoverGeraltProjects(workspaceFolders, fsImpl = fs) {
   return [...new Set(projects)].sort();
 }
 
-function createTaskDefinition(command, cwd, executable = "geralt") {
+function createTaskDefinition(command, cwd, executable = "ax") {
   return {
-    type: "geralt",
+    type: "aurex",
     command: normalizeCommand(command),
     cwd: path.resolve(cwd),
     executable,
@@ -70,7 +70,7 @@ function walk(directory, fsImpl, projects) {
     if (!fsImpl.statSync(directory).isDirectory()) {
       return;
     }
-    if (isGeraltProject(directory, fsImpl)) {
+    if (isAurexProject(directory, fsImpl)) {
       projects.push(directory);
     }
     entries = fsImpl.readdirSync(directory, { withFileTypes: true });
@@ -95,11 +95,11 @@ function fileExists(file, fsImpl) {
 }
 
 module.exports = {
-  GERALT_TOML,
+  AUREX_TOML,
   createTaskDefinition,
-  discoverGeraltProjects,
-  findNearestGeraltProject,
-  isGeraltProject,
+  discoverAurexProjects,
+  findNearestAurexProject,
+  isAurexProject,
   normalizeCommand,
   toDirectory,
 };

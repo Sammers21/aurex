@@ -1,18 +1,18 @@
-package dev.geralt.intellij;
+package dev.aurex.intellij;
 
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 
-public final class GeraltProjectLocatorTest {
+public final class AurexProjectLocatorTest {
     public static void main(String[] args) throws Exception {
         findsNearestProjectFromNestedFiles();
         stopsAtWorkspaceBoundary();
         discoversNestedProjectsAndSkipsGeneratedFolders();
         validatesCommands();
         validatesPluginXmlActions();
-        System.out.println("Geralt IntelliJ project locator tests passed");
+        System.out.println("Aurex IntelliJ project locator tests passed");
     }
 
     private static void findsNearestProjectFromNestedFiles() throws IOException {
@@ -20,12 +20,12 @@ public final class GeraltProjectLocatorTest {
         Path project = root.resolve("service");
         Path source = project.resolve("src/com/example/Main.java");
         Files.createDirectories(source.getParent());
-        Files.writeString(project.resolve(GeraltProjectLocator.GERALT_TOML), "[package]\nname = \"service\"\n");
+        Files.writeString(project.resolve(AurexProjectLocator.AUREX_TOML), "[package]\nname = \"service\"\n");
         Files.writeString(source, "class Main {}\n");
 
         assertEquals(
                 project,
-                GeraltProjectLocator.nearestRoot(source, List.of(root)).orElseThrow(),
+                AurexProjectLocator.nearestRoot(source, List.of(root)).orElseThrow(),
                 "nearest project root"
         );
     }
@@ -35,11 +35,11 @@ public final class GeraltProjectLocatorTest {
         Path workspace = root.resolve("workspace");
         Path source = workspace.resolve("src/Main.java");
         Files.createDirectories(source.getParent());
-        Files.writeString(root.resolve(GeraltProjectLocator.GERALT_TOML), "[package]\nname = \"outside\"\n");
+        Files.writeString(root.resolve(AurexProjectLocator.AUREX_TOML), "[package]\nname = \"outside\"\n");
         Files.writeString(source, "class Main {}\n");
 
         assertTrue(
-                GeraltProjectLocator.nearestRoot(source, List.of(workspace)).isEmpty(),
+                AurexProjectLocator.nearestRoot(source, List.of(workspace)).isEmpty(),
                 "workspace boundary should stop upward search"
         );
     }
@@ -51,34 +51,34 @@ public final class GeraltProjectLocatorTest {
         Path generated = root.resolve("target/ignored");
         for (Path project : List.of(api, cli, generated)) {
             Files.createDirectories(project);
-            Files.writeString(project.resolve(GeraltProjectLocator.GERALT_TOML), "[package]\nname = \"demo\"\n");
+            Files.writeString(project.resolve(AurexProjectLocator.AUREX_TOML), "[package]\nname = \"demo\"\n");
         }
 
         assertEquals(
                 List.of(api, cli),
-                GeraltProjectLocator.discoverRoots(List.of(root)),
+                AurexProjectLocator.discoverRoots(List.of(root)),
                 "discovered project roots"
         );
     }
 
     private static void validatesCommands() {
-        assertEquals(GeraltCommand.BUILD, GeraltCommand.fromCliValue("build"), "build command");
-        assertThrows(() -> GeraltCommand.fromCliValue("delete"), "invalid command");
+        assertEquals(AurexCommand.BUILD, AurexCommand.fromCliValue("build"), "build command");
+        assertThrows(() -> AurexCommand.fromCliValue("delete"), "invalid command");
     }
 
     private static void validatesPluginXmlActions() throws IOException {
         String pluginXml = Files.readString(Path.of("src/main/resources/META-INF/plugin.xml"));
 
-        assertContains(pluginXml, "Geralt.Init", "init action");
-        assertContains(pluginXml, "Geralt.Build", "build action");
-        assertContains(pluginXml, "Geralt.Run", "run action");
-        assertContains(pluginXml, "Geralt.OpenToml", "open action");
+        assertContains(pluginXml, "Aurex.Init", "init action");
+        assertContains(pluginXml, "Aurex.Build", "build action");
+        assertContains(pluginXml, "Aurex.Run", "run action");
+        assertContains(pluginXml, "Aurex.OpenToml", "open action");
         assertContains(pluginXml, "ToolsMenu", "tools menu registration");
         assertContains(pluginXml, "ProjectViewPopupMenu", "project view registration");
     }
 
     private static Path tempDir() throws IOException {
-        return Files.createTempDirectory("geralt-intellij-");
+        return Files.createTempDirectory("aurex-intellij-");
     }
 
     private static void assertEquals(Object expected, Object actual, String label) {

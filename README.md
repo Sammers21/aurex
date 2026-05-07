@@ -1,27 +1,27 @@
-# Geralt
+# Aurex
 
-Geralt is a Cargo-like build system for Java projects. It compiles Java sources
+Aurex is a Cargo-like build system for Java projects. It compiles Java sources
 with `javac`, resolves Maven dependencies, and packages runnable classpath or
-fat jars from a small `geralt.toml` file.
+fat jars from a small `aurex.toml` file.
 
 IDE helpers for VS Code and IntelliJ live under `plugins/`.
 
 ## Hello World
 
-You can initialize a new Geralt project by running:
+You can initialize a new Aurex project by running:
 
 ```bash
-$ geralt init
+$ ax init
 ```
 
-This will create a new Geralt project in the current directory. The structure of the project will look like this:
+This will create a new Aurex project in the current directory. The structure of the project will look like this:
 
 ```
 src/
   com/
     example/
       Main.java
-geralt.toml
+aurex.toml
 ```
 
 The `Main.java` file will contain the following code:
@@ -36,7 +36,7 @@ public class Main {
 }
 ```
 
-and the `geralt.toml` file will contain the following configuration:
+and the `aurex.toml` file will contain the following configuration:
 
 ```toml
 [package]
@@ -49,7 +49,7 @@ version = "0.0.1"
 You can build the project by running:
 
 ```bash
-$ geralt run
+$ ax run
 ```
 
 This will compile the project and run the `Main` class.
@@ -57,28 +57,28 @@ This will compile the project and run the `Main` class.
 You can also build the project without running it by running:
 
 ```bash
-$ geralt build
+$ ax build
 ```
 
 This will compile the project, resolve dependencies into `target/deps`, and create the configured runnable jar.
 
-To check which Java runtime Geralt will use from your current shell, run:
+To check which Java runtime Aurex will use from your current shell, run:
 
 ```bash
-$ geralt java
+$ ax java
 ```
 
-Geralt uses the `java`, `javac`, and `jar` commands available on your shell
+Aurex uses the `java`, `javac`, and `jar` commands available on your shell
 `PATH`; `JAVA_HOME` is not used for tool selection.
 
-In order to add dependencies to your project, you can add them to the `geralt.toml` file under the `[dependencies]` section. For example, to add the `org.apache.commons:commons-lang3:3.12.0` dependency, you can add the following line:
+In order to add dependencies to your project, you can add them to the `aurex.toml` file under the `[dependencies]` section. For example, to add the `org.apache.commons:commons-lang3:3.12.0` dependency, you can add the following line:
 
 ```toml
 [dependencies]
 "org.apache.commons:commons-lang3" = "3.12.0"
 ```
 
-You can then run `geralt build` to download the dependency and build the project.
+You can then run `ax build` to download the dependency and build the project.
 
 Dependencies are resolved from configured Maven repositories first, then Maven
 Central. You can add repositories with optional basic auth:
@@ -91,7 +91,7 @@ username = "user"
 password = "pass"
 ```
 
-By default Geralt creates a classpath jar whose manifest points at dependency
+By default Aurex creates a classpath jar whose manifest points at dependency
 jars in `target/deps`. To build one merged jar instead, set:
 
 ```toml
@@ -109,7 +109,7 @@ dirs = ["settings"]
 
 ## Examples
 
-The `examples/` folder contains runnable Geralt subprojects that exercise
+The `examples/` folder contains runnable Aurex subprojects that exercise
 different project shapes:
 
 - `basic`: no-dependency hello world project.
@@ -126,10 +126,10 @@ cargo test --test examples
 
 ## IDE Plugins
 
-Geralt IDE helpers live under `plugins/`:
+Aurex IDE helpers live under `plugins/`:
 
 - `plugins/vscode`: VS Code extension with init/build/run/open commands,
-  task provider support, settings, and `geralt.toml` snippets.
+  task provider support, settings, and `aurex.toml` snippets.
 - `plugins/intellij`: IntelliJ Platform plugin project with Tools menu and
   project-view actions for init/build/run/open.
 
@@ -142,16 +142,18 @@ cd plugins/intellij && ./scripts/test.ps1
 
 ## Installation
 
-You can install Geralt by running:
+You can install Aurex by running:
 
 MacOS with [Homebrew](https://brew.sh/):
 
 ```bash
-brew install geralt
+brew install aurex
+ax init
 ```
 
 Linux via [sdkman](https://sdkman.io/):
 
 ```bash
-sdk install geralt
+sdk install aurex
+ax init
 ```

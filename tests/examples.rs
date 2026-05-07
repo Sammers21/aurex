@@ -1,4 +1,4 @@
-use geralt::{build, config};
+use aurex::{build, config};
 use std::{
     fs,
     path::{Path, PathBuf},

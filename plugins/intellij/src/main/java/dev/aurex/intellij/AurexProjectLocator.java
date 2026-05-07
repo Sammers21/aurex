@@ -1,4 +1,4 @@
-package dev.geralt.intellij;
+package dev.aurex.intellij;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -12,8 +12,8 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Stream;
 
-public final class GeraltProjectLocator {
-    public static final String GERALT_TOML = "geralt.toml";
+public final class AurexProjectLocator {
+    public static final String AUREX_TOML = "aurex.toml";
 
     private static final Set<String> IGNORED_DIRECTORIES = Set.of(
             ".git",
@@ -24,11 +24,11 @@ public final class GeraltProjectLocator {
             "target"
     );
 
-    private GeraltProjectLocator() {
+    private AurexProjectLocator() {
     }
 
-    public static boolean isGeraltProject(Path directory) {
-        return directory != null && Files.isRegularFile(directory.resolve(GERALT_TOML));
+    public static boolean isAurexProject(Path directory) {
+        return directory != null && Files.isRegularFile(directory.resolve(AUREX_TOML));
     }
 
     public static Optional<Path> nearestRoot(Path start, Collection<Path> workspaceBoundaries) {
@@ -46,7 +46,7 @@ public final class GeraltProjectLocator {
         for (Path current = directoryFor(start).toAbsolutePath().normalize();
              current != null;
              current = current.getParent()) {
-            if (isGeraltProject(current)) {
+            if (isAurexProject(current)) {
                 return Optional.of(current);
             }
             if (boundaries.contains(current)) {
@@ -77,7 +77,7 @@ public final class GeraltProjectLocator {
             return;
         }
 
-        if (isGeraltProject(directory)) {
+        if (isAurexProject(directory)) {
             projects.add(directory);
         }
 

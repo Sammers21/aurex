@@ -1,4 +1,4 @@
-use geralt::{build, config};
+use aurex::{build, config};
 use std::{
     fs::{self, File},
     io::Read,
@@ -12,7 +12,7 @@ fn commons_lang_dependency_runs_from_maven_central() {
     let project = fresh_test_dir("commons-lang");
     write_project_file(
         &project,
-        "geralt.toml",
+        "aurex.toml",
         r#"[package]
 name = "commons-lang"
 version = "0.1.0"
@@ -32,7 +32,7 @@ import org.apache.commons.lang3.StringUtils;
 
 public class Main {
     public static void main(String[] args) {
-        System.out.println(StringUtils.capitalize("geralt"));
+        System.out.println(StringUtils.capitalize("aurex"));
     }
 }
 "#,
@@ -50,7 +50,7 @@ public class Main {
         "java failed: {}",
         String::from_utf8_lossy(&output.stderr)
     );
-    assert_eq!(stdout(&output), "Geralt\n");
+    assert_eq!(stdout(&output), "Aurex\n");
 }
 
 #[test]
@@ -58,7 +58,7 @@ fn configured_resource_directory_is_packaged_in_fat_jar() {
     let project = fresh_test_dir("resource-dir");
     write_project_file(
         &project,
-        "geralt.toml",
+        "aurex.toml",
         r#"[package]
 name = "resource-dir"
 version = "0.1.0"
@@ -116,11 +116,11 @@ fn file_repository_dependency_runs_in_classpath_mode() {
     let project = root.join("app");
     write_local_dependency_project(&project, &repository_url, None);
 
-    let output = run_geralt(&project, "run");
+    let output = run_ax(&project, "run");
 
     assert!(
         output.status.success(),
-        "geralt run failed: {}",
+        "ax run failed: {}",
         String::from_utf8_lossy(&output.stderr)
     );
     assert_eq!(stdout(&output), "Hello from local repo\n");
@@ -139,11 +139,11 @@ fn file_repository_dependency_runs_in_fat_mode() {
     let project = root.join("app");
     write_local_dependency_project(&project, &repository_url, Some("fat"));
 
-    let output = run_geralt(&project, "run");
+    let output = run_ax(&project, "run");
 
     assert!(
         output.status.success(),
-        "geralt run failed: {}",
+        "ax run failed: {}",
         String::from_utf8_lossy(&output.stderr)
     );
     assert_eq!(stdout(&output), "Hello from local repo\n");
@@ -166,11 +166,11 @@ fn file_repository_transitive_dependencies_are_downloaded_and_run() {
     let project = root.join("app");
     write_transitive_dependency_project(&project, &repository_url, None);
 
-    let output = run_geralt(&project, "run");
+    let output = run_ax(&project, "run");
 
     assert!(
         output.status.success(),
-        "geralt run failed: {}",
+        "ax run failed: {}",
         String::from_utf8_lossy(&output.stderr)
     );
     assert_eq!(stdout(&output), "Hello from local repo\n");
@@ -185,10 +185,10 @@ fn cli_build_creates_self_contained_fat_jar_for_transitive_dependencies() {
     let project = root.join("app");
     write_transitive_dependency_project(&project, &repository_url, Some("fat"));
 
-    let build = run_geralt(&project, "build");
+    let build = run_ax(&project, "build");
     assert!(
         build.status.success(),
-        "geralt build failed: {}",
+        "ax build failed: {}",
         String::from_utf8_lossy(&build.stderr)
     );
 
@@ -238,7 +238,7 @@ fn write_local_dependency_project(project: &Path, repository_url: &str, jar_mode
         .unwrap_or_default();
     write_project_file(
         project,
-        "geralt.toml",
+        "aurex.toml",
         &format!(
             r#"[package]
 name = "local-app"
@@ -281,7 +281,7 @@ fn write_transitive_dependency_project(
         .unwrap_or_default();
     write_project_file(
         project,
-        "geralt.toml",
+        "aurex.toml",
         &format!(
             r#"[package]
 name = "local-app"
@@ -443,12 +443,12 @@ fn file_url(path: &Path) -> String {
     format!("file://{path}")
 }
 
-fn run_geralt(project: &Path, subcommand: &str) -> std::process::Output {
-    Command::new(env!("CARGO_BIN_EXE_geralt"))
+fn run_ax(project: &Path, subcommand: &str) -> std::process::Output {
+    Command::new(env!("CARGO_BIN_EXE_ax"))
         .arg(subcommand)
         .current_dir(project)
         .output()
-        .expect("failed to run geralt")
+        .expect("failed to run ax")
 }
 
 fn stdout(output: &std::process::Output) -> String {

@@ -57,9 +57,9 @@ pub struct Repository {
 }
 
 pub fn read_toml(root: &str) -> Config {
-    let toml = std::fs::read_to_string(format!("{}/geralt.toml", root));
+    let toml = std::fs::read_to_string(format!("{}/aurex.toml", root));
     if toml.is_err() {
-        panic!("Failed to read the geralt.toml file: {}", toml.unwrap_err());
+        panic!("Failed to read the aurex.toml file: {}", toml.unwrap_err());
     }
     let config: ConfigToml = toml::from_str(&toml.unwrap()).unwrap();
     return Config {

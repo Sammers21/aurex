@@ -1,4 +1,4 @@
-package dev.geralt.intellij;
+package dev.aurex.intellij;
 
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.GeneralCommandLine;
@@ -20,11 +20,11 @@ import com.intellij.openapi.util.Key;
 import java.nio.file.Path;
 import org.jetbrains.annotations.NotNull;
 
-public final class GeraltRunner {
-    private GeraltRunner() {
+public final class AurexRunner {
+    private AurexRunner() {
     }
 
-    public static void run(Project project, Path cwd, GeraltCommand command, Runnable onSuccess) {
+    public static void run(Project project, Path cwd, AurexCommand command, Runnable onSuccess) {
         try {
             GeneralCommandLine commandLine = new GeneralCommandLine(resolveExecutable(), command.cliValue())
                     .withWorkDirectory(cwd.toFile())
@@ -43,7 +43,7 @@ public final class GeraltRunner {
                     console,
                     handler,
                     console.getComponent(),
-                    "Geralt: " + command.title()
+                    "Aurex: " + command.title()
             );
             RunContentManager.getInstance(project)
                     .showRunContent(DefaultRunExecutor.getRunExecutorInstance(), descriptor);
@@ -73,19 +73,19 @@ public final class GeraltRunner {
 
             handler.startNotify();
         } catch (ExecutionException ex) {
-            notify(project, "Failed to run Geralt", ex.getMessage(), NotificationType.ERROR);
+            notify(project, "Failed to run Aurex", ex.getMessage(), NotificationType.ERROR);
         }
     }
 
     public static void notify(Project project, String title, String content, NotificationType type) {
         NotificationGroupManager.getInstance()
-                .getNotificationGroup("Geralt")
+                .getNotificationGroup("Aurex")
                 .createNotification(title, content, type)
                 .notify(project);
     }
 
     private static String resolveExecutable() {
-        String configured = System.getenv("GERALT_EXECUTABLE");
-        return configured == null || configured.isBlank() ? "geralt" : configured;
+        String configured = System.getenv("AUREX_EXECUTABLE");
+        return configured == null || configured.isBlank() ? "ax" : configured;
     }
 }

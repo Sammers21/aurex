@@ -1,15 +1,15 @@
-# Geralt for VS Code
+# Aurex for VS Code
 
-This extension adds command-palette, editor-title, Explorer context-menu, and task-provider support for Geralt Java projects.
+This extension adds command-palette, editor-title, Explorer context-menu, and task-provider support for Aurex Java projects.
 
 ## Commands
 
-- `Geralt: Init Project`
-- `Geralt: Build`
-- `Geralt: Run`
-- `Geralt: Open geralt.toml`
+- `Aurex: Init Project`
+- `Aurex: Build`
+- `Aurex: Run`
+- `Aurex: Open aurex.toml`
 
-Set `geralt.executablePath` if the `geralt` executable is not on `PATH`.
+Set `aurex.executablePath` if the `ax` executable is not on `PATH`.
 
 ## Tests
 

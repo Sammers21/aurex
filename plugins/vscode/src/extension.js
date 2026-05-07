@@ -2,24 +2,24 @@ const fs = require("fs");
 const path = require("path");
 const vscode = require("vscode");
 const {
-  GERALT_TOML,
+  AUREX_TOML,
   createTaskDefinition,
-  discoverGeraltProjects,
-  findNearestGeraltProject,
-  isGeraltProject,
+  discoverAurexProjects,
+  findNearestAurexProject,
+  isAurexProject,
   normalizeCommand,
   toDirectory,
-} = require("./geraltProjects");
+} = require("./aurexProjects");
 
 function activate(context) {
-  const provider = new GeraltTaskProvider();
+  const provider = new AurexTaskProvider();
 
   context.subscriptions.push(
-    vscode.tasks.registerTaskProvider("geralt", provider),
-    vscode.commands.registerCommand("geralt.initProject", (uri) => initProject(uri)),
-    vscode.commands.registerCommand("geralt.build", (uri) => runProjectCommand("build", uri)),
-    vscode.commands.registerCommand("geralt.run", (uri) => runProjectCommand("run", uri)),
-    vscode.commands.registerCommand("geralt.openManifest", (uri) => openManifest(uri))
+    vscode.tasks.registerTaskProvider("aurex", provider),
+    vscode.commands.registerCommand("aurex.initProject", (uri) => initProject(uri)),
+    vscode.commands.registerCommand("aurex.build", (uri) => runProjectCommand("build", uri)),
+    vscode.commands.registerCommand("aurex.run", (uri) => runProjectCommand("run", uri)),
+    vscode.commands.registerCommand("aurex.openManifest", (uri) => openManifest(uri))
   );
 }
 
@@ -31,40 +31,40 @@ async function initProject(uri) {
     return;
   }
 
-  if (isGeraltProject(root)) {
-    vscode.window.showWarningMessage(`${GERALT_TOML} already exists in ${root}`);
+  if (isAurexProject(root)) {
+    vscode.window.showWarningMessage(`${AUREX_TOML} already exists in ${root}`);
     return;
   }
 
-  await executeGeraltTask("init", root);
+  await executeAurexTask("init", root);
 }
 
 async function runProjectCommand(command, uri) {
-  const root = await resolveGeraltRoot(uri);
+  const root = await resolveAurexRoot(uri);
   if (root) {
-    await executeGeraltTask(command, root);
+    await executeAurexTask(command, root);
   }
 }
 
 async function openManifest(uri) {
-  const root = await resolveGeraltRoot(uri);
+  const root = await resolveAurexRoot(uri);
   if (!root) {
     return;
   }
 
-  const document = await vscode.workspace.openTextDocument(path.join(root, GERALT_TOML));
+  const document = await vscode.workspace.openTextDocument(path.join(root, AUREX_TOML));
   await vscode.window.showTextDocument(document);
 }
 
-async function resolveGeraltRoot(uri) {
+async function resolveAurexRoot(uri) {
   const folders = workspaceFolderPaths();
   const selected = selectedPath(uri);
-  const nearest = findNearestGeraltProject(selected, folders);
+  const nearest = findNearestAurexProject(selected, folders);
   if (nearest) {
     return nearest;
   }
 
-  const discovered = discoverGeraltProjects(folders);
+  const discovered = discoverAurexProjects(folders);
   if (discovered.length === 1) {
     return discovered[0];
   }
@@ -72,7 +72,7 @@ async function resolveGeraltRoot(uri) {
     return pickProject(discovered);
   }
 
-  vscode.window.showWarningMessage(`No ${GERALT_TOML} found in this workspace.`);
+  vscode.window.showWarningMessage(`No ${AUREX_TOML} found in this workspace.`);
   return undefined;
 }
 
@@ -93,7 +93,7 @@ async function resolveInitRoot(uri) {
     canSelectFiles: false,
     canSelectFolders: true,
     canSelectMany: false,
-    title: "Choose a folder for geralt init",
+    title: "Choose a folder for ax init",
   });
   return picked?.[0]?.fsPath;
 }
@@ -101,22 +101,22 @@ async function resolveInitRoot(uri) {
 async function pickProject(projects) {
   const picked = await vscode.window.showQuickPick(
     projects.map((project) => ({ label: path.basename(project), description: project, project })),
-    { placeHolder: "Choose a Geralt project" }
+    { placeHolder: "Choose an Aurex project" }
   );
   return picked?.project;
 }
 
-async function executeGeraltTask(command, cwd) {
+async function executeAurexTask(command, cwd) {
   normalizeCommand(command);
-  const config = vscode.workspace.getConfiguration("geralt");
-  const executable = config.get("executablePath", "geralt");
+  const config = vscode.workspace.getConfiguration("aurex");
+  const executable = config.get("executablePath", "ax");
   const reveal = config.get("revealTerminal", true);
   const execution = new vscode.ShellExecution(executable, [command], { cwd });
   const task = new vscode.Task(
     createTaskDefinition(command, cwd, executable),
     vscode.TaskScope.Workspace,
-    `Geralt: ${command}`,
-    "geralt",
+    `Aurex: ${command}`,
+    "aurex",
     execution
   );
 
@@ -146,9 +146,9 @@ function workspaceFolderPaths() {
   return (vscode.workspace.workspaceFolders ?? []).map((folder) => folder.uri.fsPath);
 }
 
-class GeraltTaskProvider {
+class AurexTaskProvider {
   provideTasks() {
-    return discoverGeraltProjects(workspaceFolderPaths()).flatMap((root) => [
+    return discoverAurexProjects(workspaceFolderPaths()).flatMap((root) => [
       this.createTask("build", root),
       this.createTask("run", root),
     ]);
@@ -157,7 +157,7 @@ class GeraltTaskProvider {
   resolveTask(task) {
     const command = task.definition.command;
     const cwd = task.definition.cwd;
-    if (!command || !cwd || !fs.existsSync(path.join(cwd, GERALT_TOML))) {
+    if (!command || !cwd || !fs.existsSync(path.join(cwd, AUREX_TOML))) {
       return undefined;
     }
     return this.createTask(command, cwd);
@@ -167,15 +167,15 @@ class GeraltTaskProvider {
     return new vscode.Task(
       createTaskDefinition(command, cwd, executablePath()),
       vscode.TaskScope.Workspace,
-      `Geralt: ${command} (${path.basename(cwd)})`,
-      "geralt",
+      `Aurex: ${command} (${path.basename(cwd)})`,
+      "aurex",
       new vscode.ShellExecution(executablePath(), [command], { cwd })
     );
   }
 }
 
 function executablePath() {
-  return vscode.workspace.getConfiguration("geralt").get("executablePath", "geralt");
+  return vscode.workspace.getConfiguration("aurex").get("executablePath", "ax");
 }
 
 module.exports = {

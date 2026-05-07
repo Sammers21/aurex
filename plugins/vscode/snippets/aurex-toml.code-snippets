@@ -1,6 +1,6 @@
 {
-  "Geralt package": {
-    "prefix": "geralt-package",
+  "Aurex package": {
+    "prefix": "aurex-package",
     "body": [
       "[package]",
       "name = \"${1:app}\"",
@@ -11,14 +11,14 @@
       "[dependencies]"
     ]
   },
-  "Geralt dependency": {
-    "prefix": "geralt-dependency",
+  "Aurex dependency": {
+    "prefix": "aurex-dependency",
     "body": [
       "\"${1:group.id}:${2:artifact-id}\" = \"${3:1.0.0}\""
     ]
   },
-  "Geralt repository": {
-    "prefix": "geralt-repository",
+  "Aurex repository": {
+    "prefix": "aurex-repository",
     "body": [
       "[[repositories]]",
       "name = \"${1:internal}\"",
@@ -27,8 +27,8 @@
       "# password = \"${4:pass}\""
     ]
   },
-  "Geralt fat jar": {
-    "prefix": "geralt-fat",
+  "Aurex fat jar": {
+    "prefix": "aurex-fat",
     "body": [
       "[build]",
       "jar_mode = \"fat\""

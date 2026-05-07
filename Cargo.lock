@@ -58,6 +58,19 @@ dependencies = [
 ]
 
 [[package]]
+name = "aurex"
+version = "0.1.0"
+dependencies = [
+ "clap",
+ "reqwest",
+ "roxmltree",
+ "serde",
+ "toml",
+ "url",
+ "zip",
+]
+
+[[package]]
 name = "base64"
 version = "0.21.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -271,19 +284,6 @@ dependencies = [
  "memchr",
  "pin-project-lite",
  "slab",
-]
-
-[[package]]
-name = "geralt"
-version = "0.1.0"
-dependencies = [
- "clap",
- "reqwest",
- "roxmltree",
- "serde",
- "toml",
- "url",
- "zip",
 ]
 
 [[package]]

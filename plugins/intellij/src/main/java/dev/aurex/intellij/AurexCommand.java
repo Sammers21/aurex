@@ -1,8 +1,8 @@
-package dev.geralt.intellij;
+package dev.aurex.intellij;
 
 import java.util.Locale;
 
-public enum GeraltCommand {
+public enum AurexCommand {
     INIT("init", "Init"),
     BUILD("build", "Build"),
     RUN("run", "Run");
@@ -10,7 +10,7 @@ public enum GeraltCommand {
     private final String cliValue;
     private final String title;
 
-    GeraltCommand(String cliValue, String title) {
+    AurexCommand(String cliValue, String title) {
         this.cliValue = cliValue;
         this.title = title;
     }
@@ -23,12 +23,12 @@ public enum GeraltCommand {
         return title;
     }
 
-    public static GeraltCommand fromCliValue(String value) {
-        for (GeraltCommand command : values()) {
+    public static AurexCommand fromCliValue(String value) {
+        for (AurexCommand command : values()) {
             if (command.cliValue.equals(value.toLowerCase(Locale.ROOT))) {
                 return command;
             }
         }
-        throw new IllegalArgumentException("Unsupported Geralt command: " + value);
+        throw new IllegalArgumentException("Unsupported Aurex command: " + value);
     }
 }

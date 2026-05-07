@@ -2,14 +2,14 @@ use std::process::Command;
 
 #[test]
 fn java_command_reports_runtime_version() {
-    let output = Command::new(env!("CARGO_BIN_EXE_geralt"))
+    let output = Command::new(env!("CARGO_BIN_EXE_ax"))
         .arg("java")
         .output()
-        .expect("failed to execute geralt java");
+        .expect("failed to execute ax java");
 
     assert!(
         output.status.success(),
-        "geralt java failed: {}",
+        "ax java failed: {}",
         String::from_utf8_lossy(&output.stderr)
     );
 
@@ -24,6 +24,6 @@ fn java_command_reports_runtime_version() {
     );
     assert!(
         !stdout.contains("JAVA_HOME"),
-        "geralt java should report the PATH-resolved runtime only, got: {stdout}"
+        "ax java should report the PATH-resolved runtime only, got: {stdout}"
     );
 }

@@ -1,13 +1,13 @@
-# Geralt for IntelliJ
+# Aurex for IntelliJ
 
-This plugin adds Tools menu actions for Geralt Java projects:
+This plugin adds Tools menu actions for Aurex Java projects:
 
-- Init Geralt Project
-- Build Geralt Project
-- Run Geralt Project
-- Open geralt.toml
+- Init Aurex Project
+- Build Aurex Project
+- Run Aurex Project
+- Open aurex.toml
 
-The runner uses `GERALT_EXECUTABLE` when set, otherwise it runs `geralt` from `PATH`.
+The runner uses `AUREX_EXECUTABLE` when set, otherwise it runs `ax` from `PATH`.
 
 ## Local Tests
 

@@ -1,37 +1,37 @@
 <idea-plugin>
-  <id>dev.geralt.ide</id>
-  <name>Geralt</name>
-  <vendor>Geralt</vendor>
-  <description>Geralt init, build, run, and geralt.toml navigation actions.</description>
+  <id>dev.aurex.ide</id>
+  <name>Aurex</name>
+  <vendor>Aurex</vendor>
+  <description>Aurex init, build, run, and aurex.toml navigation actions.</description>
 
   <depends>com.intellij.modules.platform</depends>
 
   <extensions defaultExtensionNs="com.intellij">
-    <notificationGroup id="Geralt" displayType="BALLOON"/>
+    <notificationGroup id="Aurex" displayType="BALLOON"/>
   </extensions>
 
   <actions>
-    <group id="Geralt.Actions" text="Geralt" popup="true">
+    <group id="Aurex.Actions" text="Aurex" popup="true">
       <add-to-group group-id="ToolsMenu" anchor="last"/>
       <add-to-group group-id="ProjectViewPopupMenu" anchor="last"/>
 
-      <action id="Geralt.Init"
-              class="dev.geralt.intellij.actions.InitGeraltProjectAction"
-              text="Init Geralt Project"
-              description="Run geralt init"/>
-      <action id="Geralt.Build"
-              class="dev.geralt.intellij.actions.BuildGeraltProjectAction"
-              text="Build Geralt Project"
-              description="Run geralt build"/>
-      <action id="Geralt.Run"
-              class="dev.geralt.intellij.actions.RunGeraltProjectAction"
-              text="Run Geralt Project"
-              description="Run geralt run"/>
+      <action id="Aurex.Init"
+              class="dev.aurex.intellij.actions.InitAurexProjectAction"
+              text="Init Aurex Project"
+              description="Run ax init"/>
+      <action id="Aurex.Build"
+              class="dev.aurex.intellij.actions.BuildAurexProjectAction"
+              text="Build Aurex Project"
+              description="Run ax build"/>
+      <action id="Aurex.Run"
+              class="dev.aurex.intellij.actions.RunAurexProjectAction"
+              text="Run Aurex Project"
+              description="Run ax run"/>
       <separator/>
-      <action id="Geralt.OpenToml"
-              class="dev.geralt.intellij.actions.OpenGeraltTomlAction"
-              text="Open geralt.toml"
-              description="Open the Geralt project config"/>
+      <action id="Aurex.OpenToml"
+              class="dev.aurex.intellij.actions.OpenAurexTomlAction"
+              text="Open aurex.toml"
+              description="Open the Aurex project config"/>
     </group>
   </actions>
 </idea-plugin>

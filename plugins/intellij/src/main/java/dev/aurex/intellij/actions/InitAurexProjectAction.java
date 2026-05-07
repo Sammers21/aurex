@@ -1,16 +1,16 @@
-package dev.geralt.intellij.actions;
+package dev.aurex.intellij.actions;
 
 import com.intellij.notification.NotificationType;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.Project;
-import dev.geralt.intellij.GeraltCommand;
-import dev.geralt.intellij.GeraltProjectLocator;
-import dev.geralt.intellij.GeraltRunner;
+import dev.aurex.intellij.AurexCommand;
+import dev.aurex.intellij.AurexProjectLocator;
+import dev.aurex.intellij.AurexRunner;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import org.jetbrains.annotations.NotNull;
 
-public final class InitGeraltProjectAction extends GeraltActionSupport {
+public final class InitAurexProjectAction extends AurexActionSupport {
     @Override
     public void actionPerformed(@NotNull AnActionEvent event) {
         Project project = event.getProject();
@@ -24,16 +24,16 @@ public final class InitGeraltProjectAction extends GeraltActionSupport {
             return;
         }
 
-        if (Files.exists(root.resolve(GeraltProjectLocator.GERALT_TOML))) {
-            GeraltRunner.notify(
+        if (Files.exists(root.resolve(AurexProjectLocator.AUREX_TOML))) {
+            AurexRunner.notify(
                     project,
-                    "Geralt project already exists",
-                    "geralt.toml already exists in " + root,
+                    "Aurex project already exists",
+                    "aurex.toml already exists in " + root,
                     NotificationType.WARNING
             );
             return;
         }
 
-        GeraltRunner.run(project, root, GeraltCommand.INIT, () -> openManifest(project, root));
+        AurexRunner.run(project, root, AurexCommand.INIT, () -> openManifest(project, root));
     }
 }

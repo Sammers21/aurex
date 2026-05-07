@@ -9,8 +9,8 @@ if (Test-Path -LiteralPath $classes) {
 New-Item -ItemType Directory -Path $classes | Out-Null
 
 javac -d $classes `
-    (Join-Path $root "src\main\java\dev\geralt\intellij\GeraltCommand.java") `
-    (Join-Path $root "src\main\java\dev\geralt\intellij\GeraltProjectLocator.java") `
-    (Join-Path $root "src\test\java\dev\geralt\intellij\GeraltProjectLocatorTest.java")
+    (Join-Path $root "src\main\java\dev\aurex\intellij\AurexCommand.java") `
+    (Join-Path $root "src\main\java\dev\aurex\intellij\AurexProjectLocator.java") `
+    (Join-Path $root "src\test\java\dev\aurex\intellij\AurexProjectLocatorTest.java")
 
-java -cp $classes dev.geralt.intellij.GeraltProjectLocatorTest
+java -cp $classes dev.aurex.intellij.AurexProjectLocatorTest

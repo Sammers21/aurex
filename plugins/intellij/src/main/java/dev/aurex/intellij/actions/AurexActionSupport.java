@@ -1,4 +1,4 @@
-package dev.geralt.intellij.actions;
+package dev.aurex.intellij.actions;
 
 import com.intellij.notification.NotificationType;
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -8,14 +8,14 @@ import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
-import dev.geralt.intellij.GeraltProjectLocator;
-import dev.geralt.intellij.GeraltRunner;
+import dev.aurex.intellij.AurexProjectLocator;
+import dev.aurex.intellij.AurexRunner;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Optional;
 
-abstract class GeraltActionSupport extends DumbAwareAction {
-    protected Optional<Path> existingGeraltRoot(AnActionEvent event) {
+abstract class AurexActionSupport extends DumbAwareAction {
+    protected Optional<Path> existingAurexRoot(AnActionEvent event) {
         Project project = event.getProject();
         if (project == null) {
             return Optional.empty();
@@ -23,7 +23,7 @@ abstract class GeraltActionSupport extends DumbAwareAction {
 
         return selectedPath(event)
                 .or(() -> projectBasePath(project))
-                .flatMap(start -> GeraltProjectLocator.nearestRoot(
+                .flatMap(start -> AurexProjectLocator.nearestRoot(
                         start,
                         projectBasePath(project).map(List::of).orElse(List.of())
                 ));
@@ -40,17 +40,17 @@ abstract class GeraltActionSupport extends DumbAwareAction {
 
     protected void openManifest(Project project, Path root) {
         VirtualFile file = LocalFileSystem.getInstance()
-                .refreshAndFindFileByNioFile(root.resolve(GeraltProjectLocator.GERALT_TOML));
+                .refreshAndFindFileByNioFile(root.resolve(AurexProjectLocator.AUREX_TOML));
         if (file != null) {
             FileEditorManager.getInstance(project).openFile(file, true);
         }
     }
 
     protected void warnNoProject(Project project) {
-        GeraltRunner.notify(
+        AurexRunner.notify(
                 project,
-                "No Geralt project found",
-                "Could not find geralt.toml from the selected file or project root.",
+                "No Aurex project found",
+                "Could not find aurex.toml from the selected file or project root.",
                 NotificationType.WARNING
         );
     }

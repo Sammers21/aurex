@@ -3,7 +3,7 @@ plugins {
     id("org.jetbrains.intellij.platform") version "2.16.0"
 }
 
-group = "dev.geralt"
+group = "dev.aurex"
 version = "0.1.0"
 
 repositories {
@@ -28,22 +28,22 @@ java {
 intellijPlatform {
     buildSearchableOptions = false
     pluginConfiguration {
-        id = "dev.geralt.ide"
-        name = "Geralt"
+        id = "dev.aurex.ide"
+        name = "Aurex"
         version = project.version.toString()
-        description = "Adds Geralt init, build, run, and geralt.toml navigation actions."
+        description = "Adds Aurex init, build, run, and aurex.toml navigation actions."
         ideaVersion {
             sinceBuild = "233"
         }
         vendor {
-            name = "Geralt"
+            name = "Aurex"
         }
     }
 }
 
 tasks.register<JavaExec>("testProjectLocator") {
     dependsOn(tasks.testClasses)
-    mainClass.set("dev.geralt.intellij.GeraltProjectLocatorTest")
+    mainClass.set("dev.aurex.intellij.AurexProjectLocatorTest")
     classpath = sourceSets["test"].runtimeClasspath
 }
 
