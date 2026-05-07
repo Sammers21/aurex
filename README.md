@@ -1,6 +1,10 @@
 # Geralt
 
-Geralt is a simple Cargo-like build system for Java projects.
+Geralt is a Cargo-like build system for Java projects. It compiles Java sources
+with `javac`, resolves Maven dependencies, and packages runnable classpath or
+fat jars from a small `geralt.toml` file.
+
+IDE helpers for VS Code and IntelliJ live under `plugins/`.
 
 ## Hello World
 
@@ -63,6 +67,9 @@ To check which Java runtime Geralt will use from your current shell, run:
 ```bash
 $ geralt java
 ```
+
+Geralt uses the `java`, `javac`, and `jar` commands available on your shell
+`PATH`.
 
 In order to add dependencies to your project, you can add them to the `geralt.toml` file under the `[dependencies]` section. For example, to add the `org.apache.commons:commons-lang3:3.12.0` dependency, you can add the following line:
 
