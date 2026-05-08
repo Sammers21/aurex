@@ -1,0 +1,161 @@
+name: Release
+
+on:
+  push:
+    branches: ["main"]
+
+permissions:
+  contents: write
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  release:
+    name: Resolve release version
+    runs-on: ubuntu-latest
+    outputs:
+      is_release: ${{ steps.version.outputs.is_release }}
+      version: ${{ steps.version.outputs.version }}
+
+    steps:
+      - name: Read head commit message
+        id: version
+        shell: bash
+        env:
+          HEAD_COMMIT_MESSAGE: ${{ github.event.head_commit.message }}
+        run: |
+          first_line="${HEAD_COMMIT_MESSAGE%%$'\n'*}"
+          first_line="${first_line%$'\r'}"
+
+          if [[ "$first_line" != release\ * ]]; then
+            echo "is_release=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          if [[ ! "$first_line" =~ ^release\ ([A-Za-z0-9._-]+)$ ]]; then
+            echo "::error::Release commits must use 'release <version_name>' with only letters, numbers, dots, underscores, and hyphens."
+            exit 1
+          fi
+
+          version="${BASH_REMATCH[1]}"
+          echo "is_release=true" >> "$GITHUB_OUTPUT"
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+
+  build:
+    name: Build ${{ matrix.asset }}
+    needs: release
+    if: needs.release.outputs.is_release == 'true'
+    runs-on: ${{ matrix.runner }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - asset: ax-linux-x64
+            binary: ax
+            runner: ubuntu-latest
+            target: x86_64-unknown-linux-gnu
+          - asset: ax-linux-arm64
+            binary: ax
+            runner: ubuntu-24.04-arm
+            target: aarch64-unknown-linux-gnu
+          - asset: ax-windows-x64.exe
+            binary: ax.exe
+            runner: windows-latest
+            target: x86_64-pc-windows-msvc
+          - asset: ax-windows-arm64.exe
+            binary: ax.exe
+            runner: windows-11-arm
+            target: aarch64-pc-windows-msvc
+          - asset: ax-macos-x64
+            binary: ax
+            runner: macos-15-intel
+            target: x86_64-apple-darwin
+          - asset: ax-macos-arm64
+            binary: ax
+            runner: macos-15
+            target: aarch64-apple-darwin
+
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Add Rust target
+        run: rustup target add ${{ matrix.target }}
+
+      - name: Build ax
+        run: cargo build --release --locked --bin ax --target ${{ matrix.target }}
+
+      - name: Stage binary
+        shell: pwsh
+        run: |
+          $targetDir = Join-Path "target" "${{ matrix.target }}"
+          $releaseDir = Join-Path $targetDir "release"
+          $source = Join-Path $releaseDir "${{ matrix.binary }}"
+          $destination = Join-Path "dist" "${{ matrix.asset }}"
+
+          New-Item -ItemType Directory -Force "dist" | Out-Null
+          Copy-Item $source $destination
+
+      - name: Upload binary artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.asset }}
+          path: dist/${{ matrix.asset }}
+          if-no-files-found: error
+          retention-days: 1
+
+  publish:
+    name: Publish GitHub release
+    needs: [release, build]
+    if: needs.release.outputs.is_release == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download binary artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: dist
+          merge-multiple: true
+
+      - name: Verify release asset set
+        shell: bash
+        run: |
+          expected=(
+            ax-linux-x64
+            ax-linux-arm64
+            ax-windows-x64.exe
+            ax-windows-arm64.exe
+            ax-macos-x64
+            ax-macos-arm64
+          )
+
+          for asset in "${expected[@]}"; do
+            if [[ ! -f "dist/$asset" ]]; then
+              echo "::error::Missing release asset: $asset"
+              exit 1
+            fi
+          done
+
+          count="$(find dist -maxdepth 1 -type f | wc -l | tr -d ' ')"
+          if [[ "$count" != "6" ]]; then
+            echo "::error::Expected exactly 6 release assets, found $count."
+            find dist -maxdepth 1 -type f -print
+            exit 1
+          fi
+
+      - name: Create GitHub release
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VERSION: ${{ needs.release.outputs.version }}
+        run: |
+          gh release create "$VERSION" \
+            dist/ax-linux-x64 \
+            dist/ax-linux-arm64 \
+            dist/ax-windows-x64.exe \
+            dist/ax-windows-arm64.exe \
+            dist/ax-macos-x64 \
+            dist/ax-macos-arm64 \
+            --repo "${{ github.repository }}" \
+            --target "${{ github.sha }}" \
+            --title "$VERSION" \
+            --notes "Release $VERSION"
