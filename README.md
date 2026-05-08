@@ -133,19 +133,3 @@ Run the example integration tests with:
 ```bash
 cargo test --test examples
 ```
-
-## IDE Helpers
-
-IDE helper projects live under `plugins/`:
-
-- `plugins/vscode`: VS Code commands, task provider, settings, and `ax.toml`
-  snippets.
-- `plugins/intellij`: IntelliJ actions for init, build, run, test, clean, fmt, and opening
-  `ax.toml`.
-
-Plugin-local tests:
-
-```bash
-cd plugins/vscode && npm test
-cd plugins/intellij && ./scripts/test.ps1
-```
