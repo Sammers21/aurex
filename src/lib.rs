@@ -659,9 +659,12 @@ fn format_with_google_java_format(config: &Config, java_files: &[PathBuf]) -> Re
     let classpath_entries = artifact_paths(&artifacts);
     let classpath = join_classpath(&classpath_entries)?;
 
+    let java_major = java_major_version()?;
     let mut java = Command::new("java");
-    for export in google_java_format_module_exports() {
-        java.arg(export);
+    if java_major >= 9 {
+        for export in google_java_format_module_exports() {
+            java.arg(export);
+        }
     }
     java.arg("-cp")
         .arg(classpath)
@@ -759,6 +762,26 @@ fn google_java_format_module_exports() -> &'static [&'static str] {
         "--add-exports=jdk.compiler/com.sun.tools.javac.tree=ALL-UNNAMED",
         "--add-exports=jdk.compiler/com.sun.tools.javac.util=ALL-UNNAMED",
     ]
+}
+
+fn java_major_version() -> Result<u16, String> {
+    let info = java_info()?;
+    parse_java_major_version(&info.version_output)
+        .ok_or_else(|| format!("Could not parse Java version from: {}", info.version_output.trim()))
+}
+
+fn parse_java_major_version(version_output: &str) -> Option<u16> {
+    let version = version_output
+        .split('"')
+        .nth(1)
+        .or_else(|| version_output.split_whitespace().find(|word| word.contains('.')))?;
+    let major = if let Some(rest) = version.strip_prefix("1.") {
+        rest.split('.').next()
+    } else {
+        version.split('.').next()
+    }?;
+
+    major.parse().ok()
 }
 
 fn parse_eclipse_formatter_options(path: &Path) -> Result<Vec<(String, String)>, String> {
@@ -1076,4 +1099,25 @@ fn normalize_path(path: &Path) -> PathBuf {
 
 fn join_classpath(entries: &[PathBuf]) -> Result<OsString, String> {
     env::join_paths(entries.iter()).map_err(|err| format!("Failed to construct classpath: {err}"))
+}
+
+#[cfg(test)]
+mod tests {
+    use super::parse_java_major_version;
+
+    #[test]
+    fn parses_legacy_and_modern_java_versions() {
+        assert_eq!(
+            parse_java_major_version(r#"java version "1.8.0_482""#),
+            Some(8)
+        );
+        assert_eq!(
+            parse_java_major_version(r#"openjdk version "10.0.2" 2018-07-17"#),
+            Some(10)
+        );
+        assert_eq!(
+            parse_java_major_version(r#"openjdk version "26.0.1" 2026-04-21"#),
+            Some(26)
+        );
+    }
 }
