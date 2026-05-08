@@ -80,6 +80,7 @@ dirs = ["settings"]
         "src/com/example/Main.java",
         r#"package com.example;
 
+import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 
@@ -89,7 +90,13 @@ public class Main {
             if (input == null) {
                 throw new IllegalStateException("missing resource");
             }
-            System.out.print(new String(input.readAllBytes(), StandardCharsets.UTF_8));
+            ByteArrayOutputStream output = new ByteArrayOutputStream();
+            byte[] buffer = new byte[1024];
+            int read;
+            while ((read = input.read(buffer)) != -1) {
+                output.write(buffer, 0, read);
+            }
+            System.out.print(new String(output.toByteArray(), StandardCharsets.UTF_8));
         }
     }
 }
