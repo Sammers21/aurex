@@ -863,6 +863,7 @@ import java.nio.charset.StandardCharsets;
 import java.io.BufferedReader;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
@@ -881,7 +882,7 @@ public final class EclipseFormatterRunner {
         }
 
         Properties properties = new Properties();
-        try (BufferedReader reader = Files.newBufferedReader(Path.of(args[0]), StandardCharsets.UTF_8)) {
+        try (BufferedReader reader = Files.newBufferedReader(Paths.get(args[0]), StandardCharsets.UTF_8)) {
             properties.load(reader);
         }
         Map<String, String> options = new HashMap<>();
@@ -891,8 +892,8 @@ public final class EclipseFormatterRunner {
 
         CodeFormatter formatter = ToolFactory.createCodeFormatter(options);
         for (int index = 1; index < args.length; index++) {
-            Path file = Path.of(args[index]);
-            String source = Files.readString(file, StandardCharsets.UTF_8);
+            Path file = Paths.get(args[index]);
+            String source = new String(Files.readAllBytes(file), StandardCharsets.UTF_8);
             TextEdit edit = formatter.format(
                     CodeFormatter.K_COMPILATION_UNIT,
                     source,
@@ -906,7 +907,7 @@ public final class EclipseFormatterRunner {
             }
             Document document = new Document(source);
             edit.apply(document);
-            Files.writeString(file, document.get(), StandardCharsets.UTF_8);
+            Files.write(file, document.get().getBytes(StandardCharsets.UTF_8));
         }
     }
 }

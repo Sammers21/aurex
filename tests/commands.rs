@@ -263,6 +263,7 @@ import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.stream.Stream;
 import org.junit.jupiter.api.Test;
 
@@ -273,7 +274,7 @@ public final class ConsoleLauncher {
     public static void main(String[] args) throws Exception {
         int count = 0;
         for (String entry : System.getProperty("java.class.path").split(File.pathSeparator)) {
-            Path root = Path.of(entry);
+            Path root = Paths.get(entry);
             if (!Files.isDirectory(root) || !root.toString().contains("test-classes")) {
                 continue;
             }
@@ -342,6 +343,8 @@ fn install_fake_google_java_format(project: &Path, repo: &Path) {
 
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.charset.StandardCharsets;
 
 public final class Main {
     private Main() {
@@ -352,12 +355,12 @@ public final class Main {
             if (arg.startsWith("-")) {
                 continue;
             }
-            Path file = Path.of(arg);
-            String source = Files.readString(file)
+            Path file = Paths.get(arg);
+            String source = new String(Files.readAllBytes(file), StandardCharsets.UTF_8)
                     .replace("public class Main{public static", "public class Main {\n    public static")
                     .replace("{System.out.println", " {\n        System.out.println")
                     .replace(";}}", ";\n    }\n}\n");
-            Files.writeString(file, source);
+            Files.write(file, source.getBytes(StandardCharsets.UTF_8));
         }
     }
 }
