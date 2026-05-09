@@ -42,6 +42,13 @@ jobs:
           java-version: ${{ matrix.java }}
           architecture: x64
 
+      - name: Use Rust stable
+        run: |
+          rustup update stable
+          rustup default stable
+          rustc --version
+          cargo --version
+
       - name: Build
         run: cargo build --locked --verbose
 
