@@ -766,15 +766,20 @@ fn google_java_format_module_exports() -> &'static [&'static str] {
 
 fn java_major_version() -> Result<u16, String> {
     let info = java_info()?;
-    parse_java_major_version(&info.version_output)
-        .ok_or_else(|| format!("Could not parse Java version from: {}", info.version_output.trim()))
+    parse_java_major_version(&info.version_output).ok_or_else(|| {
+        format!(
+            "Could not parse Java version from: {}",
+            info.version_output.trim()
+        )
+    })
 }
 
 fn parse_java_major_version(version_output: &str) -> Option<u16> {
-    let version = version_output
-        .split('"')
-        .nth(1)
-        .or_else(|| version_output.split_whitespace().find(|word| word.contains('.')))?;
+    let version = version_output.split('"').nth(1).or_else(|| {
+        version_output
+            .split_whitespace()
+            .find(|word| word.contains('.'))
+    })?;
     let major = if let Some(rest) = version.strip_prefix("1.") {
         rest.split('.').next()
     } else {

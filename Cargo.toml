@@ -1,7 +1,14 @@
 [package]
 name = "aurex"
-version = "0.1.0"
-edition = "2021"
+version = "0.1.1"
+edition = "2024"
+rust-version = "1.95"
+description = "A small Java build tool that compiles sources, resolves Maven dependencies, and packages runnable jars."
+license = "Apache-2.0"
+repository = "https://github.com/Sammers21/aurex"
+readme = "README.md"
+keywords = ["java", "build-tool", "maven", "cli"]
+categories = ["command-line-utilities", "development-tools::build-utils"]
 autobins = false
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
@@ -13,12 +20,10 @@ path = "src/main.rs"
 [dependencies]
 clap = { version = "4.5.4", features = ["derive", "cargo"] }
 crossterm = "0.27.0"
-# Keep this compatible with the Cargo 1.75 toolchain used by the repo.
 reqwest = { version = "=0.11.27", default-features = false, features = ["blocking", "rustls-tls"] }
 roxmltree = "0.20.0"
 serde = { version = "1.0.202", features = ["derive"] }
 toml = "0.8.13"
 toml_edit = "0.22.13"
-# Pin reqwest's transitive URL stack below crates that require Edition 2024.
 url = "=2.5.0"
 zip = { version = "0.6.6", default-features = false, features = ["deflate"] }

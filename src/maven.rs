@@ -1,5 +1,5 @@
 use crate::config::{Config, Repository as ConfigRepository};
-use reqwest::{blocking::Client, StatusCode};
+use reqwest::{StatusCode, blocking::Client};
 use roxmltree::{Document, Node};
 use std::{
     collections::{HashMap, HashSet},
@@ -494,7 +494,7 @@ impl MavenResolver {
                 return FetchResult::Failed(format!(
                     "{} failed to fetch `{url}`: {err}",
                     repository.name
-                ))
+                ));
             }
         };
 

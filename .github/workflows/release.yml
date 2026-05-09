@@ -79,6 +79,13 @@ jobs:
     steps:
       - uses: actions/checkout@v6
 
+      - name: Use Rust stable
+        run: |
+          rustup update stable
+          rustup default stable
+          rustc --version
+          cargo --version
+
       - name: Add Rust target
         run: rustup target add ${{ matrix.target }}
 
@@ -104,9 +111,51 @@ jobs:
           if-no-files-found: error
           retention-days: 1
 
+  publish-crate:
+    name: Publish crate
+    needs: [release, build]
+    if: needs.release.outputs.is_release == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Use Rust stable
+        run: |
+          rustup update stable
+          rustup default stable
+          rustc --version
+          cargo --version
+
+      - name: Verify package version
+        shell: bash
+        env:
+          VERSION: ${{ needs.release.outputs.version }}
+        run: |
+          actual="$(
+            cargo metadata --locked --no-deps --format-version 1 |
+              python3 -c 'import json, sys; print(json.load(sys.stdin)["packages"][0]["version"])'
+          )"
+
+          if [[ "$actual" != "$VERSION" ]]; then
+            echo "::error::Release version $VERSION does not match Cargo.toml version $actual."
+            exit 1
+          fi
+
+      - name: Publish to crates.io
+        shell: bash
+        env:
+          CRATES_IO_TOKEN: ${{ secrets.CRATES_IO_TOKEN }}
+        run: |
+          if [[ -z "${CRATES_IO_TOKEN:-}" ]]; then
+            echo "::error::Missing CRATES_IO_TOKEN repository secret."
+            exit 1
+          fi
+
+          cargo publish --locked --token "$CRATES_IO_TOKEN"
+
   publish:
     name: Publish GitHub release
-    needs: [release, build]
+    needs: [release, build, publish-crate]
     if: needs.release.outputs.is_release == 'true'
     runs-on: ubuntu-latest
     steps:

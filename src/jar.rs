@@ -5,7 +5,7 @@ use std::{
     io::{Read, Write},
     path::Path,
 };
-use zip::{write::FileOptions, CompressionMethod, ZipArchive, ZipWriter};
+use zip::{CompressionMethod, ZipArchive, ZipWriter, write::FileOptions};
 
 pub fn create_classpath_jar(
     jar_path: &Path,
@@ -410,9 +410,11 @@ mod tests {
         assert!(!manifest.contains("Class-Path:"));
 
         let entries = zip_entries(&jar_path);
-        assert!(entries
-            .iter()
-            .any(|entry| entry == "com/acme/Message.class"));
+        assert!(
+            entries
+                .iter()
+                .any(|entry| entry == "com/acme/Message.class")
+        );
         assert!(!entries.iter().any(|entry| entry == "META-INF/DEMO.SF"));
         assert_eq!(
             read_zip_bytes(&jar_path, "com/example/Main.class"),

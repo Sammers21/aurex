@@ -1,6 +1,6 @@
 use crate::maven::Coordinate;
 use std::{fs, path::Path};
-use toml_edit::{value, DocumentMut, Item, Table};
+use toml_edit::{DocumentMut, Item, Table, value};
 
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct DependencySpec {

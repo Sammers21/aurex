@@ -3,6 +3,7 @@
 /temp
 animations-demos/
 .idea/
+.vscode/
 *.iml
 node_modules/
 plugins/**/build/

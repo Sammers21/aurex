@@ -1,4 +1,4 @@
-use aurex::{config, manifest, FormatTool};
+use aurex::{FormatTool, config, manifest};
 use clap::{Arg, ArgMatches, Command};
 use std::ffi::OsString;
 use std::path::Path;

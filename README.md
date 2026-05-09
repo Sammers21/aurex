@@ -4,6 +4,39 @@ Aurex (`ax`) is a small build tool for Java applications. It reads `ax.toml`,
 compiles Java sources with `javac`, resolves Maven dependencies, copies
 configured resources, and writes a runnable jar.
 
+## Install
+
+### Cargo
+
+Install Aurex on macOS, Linux, or Windows with Cargo:
+
+```bash
+cargo install aurex --locked
+```
+
+This requires Rust 1.95 or newer.
+
+Cargo installs the `ax` command into your Cargo binary directory, usually
+`~/.cargo/bin` on macOS and Linux or `%USERPROFILE%\.cargo\bin` on Windows.
+
+### macOS Homebrew
+
+On macOS, Aurex can also be installed with Homebrew:
+
+```bash
+brew tap Sammers21/aurex
+brew install aurex
+```
+
+Verify the `ax` command is available:
+
+```bash
+ax --help
+```
+
+`ax` uses `java` and `javac` from your `PATH` when building or running
+projects.
+
 ## Quick Start
 
 Create a project in the current directory:

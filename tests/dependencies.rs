@@ -163,9 +163,11 @@ fn file_repository_dependency_runs_in_fat_mode() {
     assert!(!manifest.contains("Class-Path:"));
 
     let entries = jar_entries(&project.join("local-app.jar"));
-    assert!(entries
-        .iter()
-        .any(|entry| entry == "com/acme/Message.class"));
+    assert!(
+        entries
+            .iter()
+            .any(|entry| entry == "com/acme/Message.class")
+    );
 }
 
 #[test]
@@ -203,12 +205,16 @@ fn cli_build_creates_self_contained_fat_jar_for_transitive_dependencies() {
 
     let jar = project.join("local-app.jar");
     let entries = jar_entries(&jar);
-    assert!(entries
-        .iter()
-        .any(|entry| entry == "com/acme/Formatter.class"));
-    assert!(entries
-        .iter()
-        .any(|entry| entry == "com/acme/Message.class"));
+    assert!(
+        entries
+            .iter()
+            .any(|entry| entry == "com/acme/Formatter.class")
+    );
+    assert!(
+        entries
+            .iter()
+            .any(|entry| entry == "com/acme/Message.class")
+    );
     assert!(!jar_entry_text(&jar, "META-INF/MANIFEST.MF").contains("Class-Path:"));
 
     fs::remove_dir_all(project.join("target").join("deps")).unwrap();
